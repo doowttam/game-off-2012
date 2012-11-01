@@ -1,5 +1,5 @@
 (function() {
-  var BranchGame, Key,
+  var BranchGame, Grid, Key, Piece,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   BranchGame = (function() {
@@ -26,37 +26,31 @@
       this.win.onkeydown = function(e) {
         return _this.key.onKeyDown(e);
       };
-      this.radius = 0;
-      this.bigger = true;
+      this.grid = new Grid(this.canvas);
+      this.pieces = [];
+      this.frame = 0;
+      this.colors = ["red", "blue", "green", "yellow", "orange"];
     }
-
-    BranchGame.prototype.drawTestCircle = function() {
-      this.context.beginPath();
-      this.context.arc(this.canvas.width / 2, this.canvas.height / 2, this.radius, 0, Math.PI * 2, false);
-      this.context.closePath();
-      this.context.strokeStyle = "#000";
-      this.context.stroke();
-      this.context.fillStyle = "orange";
-      this.context.fill();
-      if (this.bigger) {
-        this.radius++;
-      } else {
-        this.radius--;
-      }
-      if (this.radius > 100) {
-        return this.bigger = false;
-      } else if (this.radius < 1) {
-        return this.bigger = true;
-      }
-    };
 
     BranchGame.prototype.resetCanvas = function() {
       return this.canvas.width = this.canvas.width;
     };
 
     BranchGame.prototype.drawFrame = function() {
+      var color, num, spots, _ref;
+      this.frame++;
       this.resetCanvas();
-      this.drawTestCircle();
+      if (this.frame % 120 === 0) {
+        color = Math.floor(Math.random() * this.colors.length);
+        this.pieces.push(new Piece(this.colors[color]));
+      }
+      if (this.pieces.length > 0) {
+        spots = this.grid.getSpots(this.pieces.length);
+        for (num = 0, _ref = spots.length - 1; 0 <= _ref ? num <= _ref : num >= _ref; 0 <= _ref ? num++ : num--) {
+          this.pieces[this.pieces.length - num - 1].draw(this.context, spots[num][0], spots[num][1]);
+        }
+      }
+      this.grid.draw(this.context, this.canvas);
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 
@@ -106,6 +100,71 @@
     };
 
     return Key;
+
+  })();
+
+  Grid = (function() {
+    var size;
+
+    size = 45;
+
+    function Grid(canvas) {
+      this.spotsPerLine = Math.floor(canvas.width / size);
+    }
+
+    Grid.prototype.draw = function(context, canvas) {
+      var x, y, _ref, _ref2;
+      context.beginPath();
+      for (x = size, _ref = canvas.width - size; size <= _ref ? x <= _ref : x >= _ref; x += size) {
+        context.moveTo(x, 0);
+        context.lineTo(x, canvas.height);
+      }
+      for (y = size, _ref2 = canvas.height - size; size <= _ref2 ? y <= _ref2 : y >= _ref2; y += size) {
+        context.moveTo(0, y);
+        context.lineTo(canvas.width, y);
+      }
+      context.closePath();
+      context.strokeStyle = "black";
+      return context.stroke();
+    };
+
+    Grid.prototype.getSpots = function(length) {
+      var col, remainder, row, rowLength, rows, spots;
+      spots = [];
+      rows = Math.ceil(length / this.spotsPerLine);
+      remainder = length % this.spotsPerLine;
+      for (row = 1; 1 <= rows ? row <= rows : row >= rows; 1 <= rows ? row++ : row--) {
+        rowLength = row === rows && remainder > 0 ? remainder : this.spotsPerLine;
+        for (col = 1; 1 <= rowLength ? col <= rowLength : col >= rowLength; 1 <= rowLength ? col++ : col--) {
+          spots.push([col * size - (size / 2), row * size - (size / 2)]);
+        }
+      }
+      return spots;
+    };
+
+    return Grid;
+
+  })();
+
+  Piece = (function() {
+    var radius;
+
+    radius = 15;
+
+    function Piece(color) {
+      this.color = color;
+    }
+
+    Piece.prototype.draw = function(context, x, y) {
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.closePath();
+      context.stroke();
+      context.fillStyle = this.color;
+      return context.fill();
+    };
+
+    return Piece;
 
   })();
 

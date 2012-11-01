@@ -15,32 +15,33 @@ class BranchGame
     @win.onkeydown = (e) =>
       @key.onKeyDown e
 
-    @radius = 0
-    @bigger = true
+    @grid = new Grid @canvas
 
-  drawTestCircle: () ->
-    @context.beginPath()
-    @context.arc @canvas.width / 2, @canvas.height / 2, @radius, 0, Math.PI * 2, false
-    @context.closePath()
-    @context.strokeStyle = "#000"
-    @context.stroke()
-    @context.fillStyle = "orange"
-    @context.fill()
+    @pieces = []
 
-    if @bigger then @radius++ else @radius--
+    @frame = 0
 
-    if @radius > 100
-      @bigger = false
-    else if @radius < 1
-      @bigger = true
+    @colors = ["red", "blue", "green", "yellow", "orange"]
 
   resetCanvas: ->
     @canvas.width = @canvas.width
 
   drawFrame: =>
+    @frame++
+
     @resetCanvas()
 
-    @drawTestCircle()
+    if @frame % 120 == 0
+      color = Math.floor(Math.random() * @colors.length)
+      @pieces.push new Piece @colors[color]
+
+    if @pieces.length > 0
+      spots = @grid.getSpots(@pieces.length)
+
+      for num in [0..spots.length - 1]
+        @pieces[@pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
+
+    @grid.draw @context, @canvas
 
     requestAnimationFrame @drawFrame if @running
 
@@ -55,7 +56,6 @@ class BranchGame
     @running = !@running
 
     requestAnimationFrame @drawFrame if @running
-
 
 # Inspired by http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/index.html
 class Key
@@ -76,5 +76,51 @@ class Key
 
   onKeyUp: (event) =>
     delete @pressed[event.keyCode]
+
+class Grid
+  size = 45
+
+  constructor: (canvas) ->
+    @spotsPerLine = Math.floor(canvas.width / size)
+
+  draw: (context, canvas) ->
+    context.beginPath()
+
+    for x in [size..(canvas.width - size)] by size
+      context.moveTo x, 0
+      context.lineTo x, canvas.height
+
+    for y in [size..(canvas.height - size)] by size
+      context.moveTo 0, y
+      context.lineTo canvas.width, y
+
+    context.closePath()
+    context.strokeStyle = "black"
+    context.stroke()
+
+  getSpots: (length) ->
+    spots     = []
+    rows      = Math.ceil length / @spotsPerLine
+    remainder = length % @spotsPerLine
+
+    for row in [1..rows]
+      rowLength = if row == rows && remainder > 0 then remainder else @spotsPerLine
+      for col in [1..rowLength]
+        spots.push [ col * size - (size/2),  row * size - (size/2) ]
+
+    spots
+
+class Piece
+  radius = 15
+
+  constructor: (@color) ->
+
+  draw: (context, x, y) ->
+    context.beginPath()
+    context.arc x, y, radius, 0, Math.PI * 2
+    context.closePath()
+    context.stroke()
+    context.fillStyle = @color
+    context.fill()
 
 window.BranchGame = BranchGame

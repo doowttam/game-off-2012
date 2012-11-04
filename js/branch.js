@@ -1,5 +1,5 @@
 (function() {
-  var BranchGame, Grid, Key, Piece,
+  var BranchGame, Grid, Key, Piece, Selector,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   BranchGame = (function() {
@@ -30,6 +30,7 @@
       this.pieces = [];
       this.frame = 0;
       this.colors = ["red", "blue", "green", "yellow", "orange"];
+      this.sel = new Selector(315);
     }
 
     BranchGame.prototype.resetCanvas = function() {
@@ -39,6 +40,7 @@
     BranchGame.prototype.drawFrame = function() {
       var color, num, spots, _ref;
       this.frame++;
+      this.sel.update(this.key);
       this.resetCanvas();
       if (this.frame % 120 === 0) {
         color = Math.floor(Math.random() * this.colors.length);
@@ -51,6 +53,7 @@
         }
       }
       this.grid.draw(this.context, this.canvas);
+      this.sel.draw(this.context);
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 
@@ -110,6 +113,7 @@
 
     function Grid(canvas) {
       this.spotsPerLine = Math.floor(canvas.width / size);
+      this.height = canvas.height - size * 2;
     }
 
     Grid.prototype.draw = function(context, canvas) {
@@ -117,9 +121,9 @@
       context.beginPath();
       for (x = size, _ref = canvas.width - size; size <= _ref ? x <= _ref : x >= _ref; x += size) {
         context.moveTo(x, 0);
-        context.lineTo(x, canvas.height);
+        context.lineTo(x, this.height);
       }
-      for (y = size, _ref2 = canvas.height - size; size <= _ref2 ? y <= _ref2 : y >= _ref2; y += size) {
+      for (y = size, _ref2 = this.height; size <= _ref2 ? y <= _ref2 : y >= _ref2; y += size) {
         context.moveTo(0, y);
         context.lineTo(canvas.width, y);
       }
@@ -165,6 +169,36 @@
     };
 
     return Piece;
+
+  })();
+
+  Selector = (function() {
+
+    function Selector(length) {
+      this.length = length;
+      this.x = 0;
+      this.y = 0;
+    }
+
+    Selector.prototype.update = function(key) {
+      if (key.pressed[key.codes.RIGHT]) this.x = this.x + 45;
+      if (key.pressed[key.codes.LEFT]) return this.x = this.x - 45;
+    };
+
+    Selector.prototype.draw = function(context) {
+      context.beginPath();
+      context.moveTo(this.x, this.y + 22.5);
+      context.lineTo(this.x, this.y + 45);
+      context.lineTo(this.x + this.length, this.y + 45);
+      context.lineTo(this.x + this.length, this.y + 22.5);
+      context.moveTo(this.x, this.y + 22.5);
+      context.closePath();
+      context.strokeStyle = "red";
+      context.lineWidth = 5;
+      return context.stroke();
+    };
+
+    return Selector;
 
   })();
 

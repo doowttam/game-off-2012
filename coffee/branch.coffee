@@ -23,11 +23,15 @@ class BranchGame
 
     @colors = ["red", "blue", "green", "yellow", "orange"]
 
+    @sel = new Selector 315
+
   resetCanvas: ->
     @canvas.width = @canvas.width
 
   drawFrame: =>
     @frame++
+
+    @sel.update @key
 
     @resetCanvas()
 
@@ -42,6 +46,7 @@ class BranchGame
         @pieces[@pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
 
     @grid.draw @context, @canvas
+    @sel.draw @context
 
     requestAnimationFrame @drawFrame if @running
 
@@ -82,15 +87,16 @@ class Grid
 
   constructor: (canvas) ->
     @spotsPerLine = Math.floor(canvas.width / size)
+    @height       = canvas.height - size * 2
 
   draw: (context, canvas) ->
     context.beginPath()
 
     for x in [size..(canvas.width - size)] by size
       context.moveTo x, 0
-      context.lineTo x, canvas.height
+      context.lineTo x, @height
 
-    for y in [size..(canvas.height - size)] by size
+    for y in [size..@height] by size
       context.moveTo 0, y
       context.lineTo canvas.width, y
 
@@ -122,5 +128,31 @@ class Piece
     context.stroke()
     context.fillStyle = @color
     context.fill()
+
+class Selector
+  constructor: (@length) ->
+    @x = 0
+    @y = 0
+
+  update: (key) ->
+    if key.pressed[key.codes.RIGHT]
+      @x = @x + 45
+
+    if key.pressed[key.codes.LEFT]
+      @x = @x - 45
+
+  draw: (context) ->
+    context.beginPath()
+
+    context.moveTo @x, @y + 22.5
+    context.lineTo @x, @y + 45
+    context.lineTo @x + @length, @y + 45
+    context.lineTo @x + @length, @y + 22.5
+    context.moveTo @x, @y + 22.5
+
+    context.closePath()
+    context.strokeStyle = "red"
+    context.lineWidth = 5
+    context.stroke()
 
 window.BranchGame = BranchGame

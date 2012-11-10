@@ -1,5 +1,5 @@
 (function() {
-  var BranchGame, Grid, Key, Piece, Selector,
+  var BranchGame, Grid, Key, Piece, Selector, Stream,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   BranchGame = (function() {
@@ -26,11 +26,10 @@
       this.win.onkeydown = function(e) {
         return _this.key.onKeyDown(e);
       };
-      this.grid = new Grid(this.canvas);
-      this.pieces = [];
+      this.stream = new Stream;
+      this.sel = new Selector(7);
+      this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.frame = 0;
-      this.colors = ["red", "blue", "green", "yellow", "orange"];
-      this.sel = new Selector(315);
     }
 
     BranchGame.prototype.resetCanvas = function() {
@@ -38,22 +37,11 @@
     };
 
     BranchGame.prototype.drawFrame = function() {
-      var color, num, spots, _ref;
       this.frame++;
       this.sel.update(this.key);
       this.resetCanvas();
-      if (this.frame % 120 === 0) {
-        color = Math.floor(Math.random() * this.colors.length);
-        this.pieces.push(new Piece(this.colors[color]));
-      }
-      if (this.pieces.length > 0) {
-        spots = this.grid.getSpots(this.pieces.length);
-        for (num = 0, _ref = spots.length - 1; 0 <= _ref ? num <= _ref : num >= _ref; 0 <= _ref ? num++ : num--) {
-          this.pieces[this.pieces.length - num - 1].draw(this.context, spots[num][0], spots[num][1]);
-        }
-      }
-      this.grid.draw(this.context, this.canvas);
-      this.sel.draw(this.context);
+      if (this.frame % 120 === 0) this.stream.addPiece();
+      this.grid.draw(this.canvas);
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 
@@ -106,30 +94,81 @@
 
   })();
 
+  Stream = (function() {
+
+    function Stream() {
+      this.addPiece = __bind(this.addPiece, this);
+    }
+
+    Stream.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
+
+    Stream.prototype.pieces = [];
+
+    Stream.prototype.addPiece = function() {
+      var color;
+      color = Math.floor(Math.random() * this.colors.length);
+      return this.pieces.push(new Piece(this.colors[color]));
+    };
+
+    return Stream;
+
+  })();
+
   Grid = (function() {
     var size;
 
     size = 45;
 
-    function Grid(canvas) {
+    function Grid(context, canvas, stream, sel) {
+      this.context = context;
+      this.stream = stream;
+      this.sel = sel;
       this.spotsPerLine = Math.floor(canvas.width / size);
       this.height = canvas.height - size * 2;
     }
 
-    Grid.prototype.draw = function(context, canvas) {
+    Grid.prototype.drawPieces = function() {
+      var num, spots, _ref, _results;
+      if (this.stream.pieces.length > 0) {
+        spots = this.getSpots(this.stream.pieces.length);
+        _results = [];
+        for (num = 0, _ref = spots.length - 1; 0 <= _ref ? num <= _ref : num >= _ref; 0 <= _ref ? num++ : num--) {
+          _results.push(this.stream.pieces[this.stream.pieces.length - num - 1].draw(this.context, spots[num][0], spots[num][1]));
+        }
+        return _results;
+      }
+    };
+
+    Grid.prototype.drawSel = function() {
+      var length, x, y;
+      x = this.sel.index * 45;
+      y = 0;
+      length = this.sel.length * 45;
+      this.context.beginPath();
+      this.context.moveTo(x, y + 45);
+      this.context.lineTo(x + length, y + 45);
+      this.context.closePath();
+      this.context.strokeStyle = "red";
+      this.context.lineWidth = 5;
+      return this.context.stroke();
+    };
+
+    Grid.prototype.draw = function(canvas) {
       var x, y, _ref, _ref2;
-      context.beginPath();
+      this.context.beginPath();
       for (x = size, _ref = canvas.width - size; size <= _ref ? x <= _ref : x >= _ref; x += size) {
-        context.moveTo(x, 0);
-        context.lineTo(x, this.height);
+        this.context.moveTo(x, 0);
+        this.context.lineTo(x, this.height);
       }
       for (y = size, _ref2 = this.height; size <= _ref2 ? y <= _ref2 : y >= _ref2; y += size) {
-        context.moveTo(0, y);
-        context.lineTo(canvas.width, y);
+        this.context.moveTo(0, y);
+        this.context.lineTo(canvas.width, y);
       }
-      context.closePath();
-      context.strokeStyle = "black";
-      return context.stroke();
+      this.context.closePath();
+      this.context.strokeStyle = "black";
+      this.context.stroke();
+      this.drawPieces();
+      return this.drawSel();
     };
 
     Grid.prototype.getSpots = function(length) {
@@ -145,6 +184,8 @@
       }
       return spots;
     };
+
+    Grid.prototype.getSplits = function(startIndex, endIndex) {};
 
     return Grid;
 
@@ -176,26 +217,14 @@
 
     function Selector(length) {
       this.length = length;
-      this.x = 0;
-      this.y = 0;
+      this.index = 0;
     }
 
     Selector.prototype.update = function(key) {
-      if (key.pressed[key.codes.RIGHT]) this.x = this.x + 45;
-      if (key.pressed[key.codes.LEFT]) return this.x = this.x - 45;
-    };
-
-    Selector.prototype.draw = function(context) {
-      context.beginPath();
-      context.moveTo(this.x, this.y + 22.5);
-      context.lineTo(this.x, this.y + 45);
-      context.lineTo(this.x + this.length, this.y + 45);
-      context.lineTo(this.x + this.length, this.y + 22.5);
-      context.moveTo(this.x, this.y + 22.5);
-      context.closePath();
-      context.strokeStyle = "red";
-      context.lineWidth = 5;
-      return context.stroke();
+      if (key.pressed[key.codes.RIGHT]) this.index = this.index + 1;
+      if (key.pressed[key.codes.LEFT]) {
+        if (this.index > 0) return this.index = this.index - 1;
+      }
     };
 
     return Selector;

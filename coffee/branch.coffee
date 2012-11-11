@@ -16,7 +16,7 @@ class BranchGame
       @key.onKeyDown e
 
     @stream = new Stream
-    @sel    = new Selector 7
+    @sel    = new Selector 7, @stream.length
     @grid   = new Grid @context, @canvas, @stream, @sel
 
     @frame = 0
@@ -73,6 +73,7 @@ class Key
 class Stream
   colors: ["red", "blue", "green", "yellow", "orange"]
   pieces: []
+  length: 105 # FIXME: This needs to be calculated, not hard coded
 
   addPiece: () =>
     color = Math.floor(Math.random() * @colors.length)
@@ -93,19 +94,19 @@ class Grid
         @stream.pieces[@stream.pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
 
   drawSel: () ->
-    x      = @sel.index * 45
-    y      = 0
-    length = @sel.length * 45
+    coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
 
-    @context.beginPath()
+    for coord in coords
+      @context.beginPath()
 
-    @context.moveTo x, y + 45
-    @context.lineTo x + length, y + 45
+      @context.moveTo coord[0], coord[1]
+      @context.lineTo coord[0] + size, coord[1]
 
-    @context.closePath()
-    @context.strokeStyle = "red"
-    @context.lineWidth = 5
-    @context.stroke()
+      @context.closePath()
+
+      @context.strokeStyle = "red"
+      @context.lineWidth = 5
+      @context.stroke()
 
   draw: (canvas) ->
     @context.beginPath()
@@ -137,8 +138,11 @@ class Grid
 
     spots
 
-  getSplits: (startIndex, endIndex) ->
-
+  spotsToCoords: (spots) ->
+    for spot in spots
+      row = Math.floor spot / @spotsPerLine
+      col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
+      [col * 45, row * 45]
 
 class Piece
   radius = 15
@@ -154,16 +158,15 @@ class Piece
     context.fill()
 
 class Selector
-  constructor: (@length) ->
+  constructor: (@length, @end) ->
     @index = 0
 
   update: (key) ->
-    if key.pressed[key.codes.RIGHT]
+    if key.pressed[key.codes.RIGHT] and (@index + @length) < @end
       @index = @index + 1
 
-    if key.pressed[key.codes.LEFT]
-      if ( @index > 0 )
-        @index = @index - 1
+    if key.pressed[key.codes.LEFT] and @index > 0
+      @index = @index - 1
 
 
 window.BranchGame = BranchGame

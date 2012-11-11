@@ -27,7 +27,7 @@
         return _this.key.onKeyDown(e);
       };
       this.stream = new Stream;
-      this.sel = new Selector(7);
+      this.sel = new Selector(7, this.stream.length);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.frame = 0;
     }
@@ -104,6 +104,8 @@
 
     Stream.prototype.pieces = [];
 
+    Stream.prototype.length = 105;
+
     Stream.prototype.addPiece = function() {
       var color;
       color = Math.floor(Math.random() * this.colors.length);
@@ -140,17 +142,24 @@
     };
 
     Grid.prototype.drawSel = function() {
-      var length, x, y;
-      x = this.sel.index * 45;
-      y = 0;
-      length = this.sel.length * 45;
-      this.context.beginPath();
-      this.context.moveTo(x, y + 45);
-      this.context.lineTo(x + length, y + 45);
-      this.context.closePath();
-      this.context.strokeStyle = "red";
-      this.context.lineWidth = 5;
-      return this.context.stroke();
+      var coord, coords, _i, _j, _len, _ref, _ref2, _results, _results2;
+      coords = this.spotsToCoords((function() {
+        _results = [];
+        for (var _i = _ref = this.sel.index, _ref2 = this.sel.index + this.sel.length - 1; _ref <= _ref2 ? _i <= _ref2 : _i >= _ref2; _ref <= _ref2 ? _i++ : _i--){ _results.push(_i); }
+        return _results;
+      }).apply(this));
+      _results2 = [];
+      for (_j = 0, _len = coords.length; _j < _len; _j++) {
+        coord = coords[_j];
+        this.context.beginPath();
+        this.context.moveTo(coord[0], coord[1]);
+        this.context.lineTo(coord[0] + size, coord[1]);
+        this.context.closePath();
+        this.context.strokeStyle = "red";
+        this.context.lineWidth = 5;
+        _results2.push(this.context.stroke());
+      }
+      return _results2;
     };
 
     Grid.prototype.draw = function(canvas) {
@@ -185,7 +194,17 @@
       return spots;
     };
 
-    Grid.prototype.getSplits = function(startIndex, endIndex) {};
+    Grid.prototype.spotsToCoords = function(spots) {
+      var col, row, spot, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = spots.length; _i < _len; _i++) {
+        spot = spots[_i];
+        row = Math.floor(spot / this.spotsPerLine);
+        col = spot >= this.spotsPerLine ? spot % this.spotsPerLine : spot;
+        _results.push([col * 45, row * 45]);
+      }
+      return _results;
+    };
 
     return Grid;
 
@@ -215,15 +234,18 @@
 
   Selector = (function() {
 
-    function Selector(length) {
+    function Selector(length, end) {
       this.length = length;
+      this.end = end;
       this.index = 0;
     }
 
     Selector.prototype.update = function(key) {
-      if (key.pressed[key.codes.RIGHT]) this.index = this.index + 1;
-      if (key.pressed[key.codes.LEFT]) {
-        if (this.index > 0) return this.index = this.index - 1;
+      if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.end) {
+        this.index = this.index + 1;
+      }
+      if (key.pressed[key.codes.LEFT] && this.index > 0) {
+        return this.index = this.index - 1;
       }
     };
 

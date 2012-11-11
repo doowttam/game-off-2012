@@ -173,7 +173,6 @@ class Selector
   hasSelection: -> @selection != null
 
   getSelection: ->
-    console.log 'making selection'
     # Our selection is indexed from the point where the stream grows,
     # so it's indexed in the oppisite way from the stream
     startIndex = (@index + @length) * -1
@@ -185,9 +184,11 @@ class Selector
     else
       pieces = @stream.pieces.slice startIndex
 
-    @selection = new Branch pieces.reverse()
+    @selection = new Branch (new Piece piece.color for piece in pieces.reverse())
 
   putSelection: ->
+    endIndex = (@index + @length) * -1
+    @stream.pieces.splice.apply @stream.pieces, [endIndex, @selection.pieces.length].concat(@selection.pieces.reverse())
     @selection = null
 
   update: (key) ->
@@ -201,7 +202,8 @@ class Selector
       @getSelection()
 
     if key.pressed[key.codes.UP]
-      @putSelection()
+      if @hasSelection()
+        @putSelection()
 
 class Branch
     constructor: (@pieces) ->

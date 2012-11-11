@@ -249,8 +249,7 @@
     };
 
     Selector.prototype.getSelection = function() {
-      var endIndex, pieces, startIndex;
-      console.log('making selection');
+      var endIndex, piece, pieces, startIndex;
       startIndex = (this.index + this.length) * -1;
       endIndex = this.index * -1;
       pieces = [];
@@ -259,10 +258,22 @@
       } else {
         pieces = this.stream.pieces.slice(startIndex);
       }
-      return this.selection = new Branch(pieces.reverse());
+      return this.selection = new Branch((function() {
+        var _i, _len, _ref, _results;
+        _ref = pieces.reverse();
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          piece = _ref[_i];
+          _results.push(new Piece(piece.color));
+        }
+        return _results;
+      })());
     };
 
     Selector.prototype.putSelection = function() {
+      var endIndex;
+      endIndex = (this.index + this.length) * -1;
+      this.stream.pieces.splice.apply(this.stream.pieces, [endIndex, this.selection.pieces.length].concat(this.selection.pieces.reverse()));
       return this.selection = null;
     };
 
@@ -274,7 +285,9 @@
         this.index = this.index - 1;
       }
       if (key.pressed[key.codes.DOWN]) this.getSelection();
-      if (key.pressed[key.codes.UP]) return this.putSelection();
+      if (key.pressed[key.codes.UP]) {
+        if (this.hasSelection()) return this.putSelection();
+      }
     };
 
     return Selector;

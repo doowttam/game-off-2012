@@ -16,7 +16,7 @@ class BranchGame
       @key.onKeyDown e
 
     @stream = new Stream
-    @sel    = new Selector 7, @stream.length
+    @sel    = new Selector 7, @stream.length, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
 
     @frame = 0
@@ -75,7 +75,7 @@ class Stream
   pieces: []
   length: 105 # FIXME: This needs to be calculated, not hard coded
 
-  addPiece: () =>
+  addPiece: ->
     color = Math.floor(Math.random() * @colors.length)
     @pieces.push(new Piece @colors[color])
 
@@ -126,6 +126,9 @@ class Grid
     @drawPieces()
     @drawSel()
 
+    if @sel.hasSelection()
+      @sel.selection.draw(@context)
+
   getSpots: (length) ->
     spots     = []
     rows      = Math.ceil length / @spotsPerLine
@@ -153,13 +156,39 @@ class Piece
     context.beginPath()
     context.arc x, y, radius, 0, Math.PI * 2
     context.closePath()
+
+    context.strokeStyle = "black"
+    context.lineWidth = 1
+
     context.stroke()
     context.fillStyle = @color
     context.fill()
 
 class Selector
-  constructor: (@length, @end) ->
+  selection: null
+
+  constructor: (@length, @end, @stream) ->
     @index = 0
+
+  hasSelection: -> @selection != null
+
+  getSelection: ->
+    console.log 'making selection'
+    # Our selection is indexed from the point where the stream grows,
+    # so it's indexed in the oppisite way from the stream
+    startIndex = (@index + @length) * -1
+    endIndex   = @index * -1
+
+    pieces = []
+    if @index > 0
+      pieces = @stream.pieces.slice startIndex, endIndex
+    else
+      pieces = @stream.pieces.slice startIndex
+
+    @selection = new Branch pieces.reverse()
+
+  putSelection: ->
+    @selection = null
 
   update: (key) ->
     if key.pressed[key.codes.RIGHT] and (@index + @length) < @end
@@ -168,5 +197,20 @@ class Selector
     if key.pressed[key.codes.LEFT] and @index > 0
       @index = @index - 1
 
+    if key.pressed[key.codes.DOWN]
+      @getSelection()
+
+    if key.pressed[key.codes.UP]
+      @putSelection()
+
+class Branch
+    constructor: (@pieces) ->
+
+    draw: (context) ->
+      x = 22.5
+      y = 360
+      for piece in @pieces
+        piece.draw context, x, y
+        x = x + 45
 
 window.BranchGame = BranchGame

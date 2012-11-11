@@ -1,5 +1,5 @@
 (function() {
-  var BranchGame, Grid, Key, Piece, Selector, Stream,
+  var Branch, BranchGame, Grid, Key, Piece, Selector, Stream,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   BranchGame = (function() {
@@ -27,7 +27,7 @@
         return _this.key.onKeyDown(e);
       };
       this.stream = new Stream;
-      this.sel = new Selector(7, this.stream.length);
+      this.sel = new Selector(7, this.stream.length, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.frame = 0;
     }
@@ -96,9 +96,7 @@
 
   Stream = (function() {
 
-    function Stream() {
-      this.addPiece = __bind(this.addPiece, this);
-    }
+    function Stream() {}
 
     Stream.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
 
@@ -177,7 +175,8 @@
       this.context.strokeStyle = "black";
       this.context.stroke();
       this.drawPieces();
-      return this.drawSel();
+      this.drawSel();
+      if (this.sel.hasSelection()) return this.sel.selection.draw(this.context);
     };
 
     Grid.prototype.getSpots = function(length) {
@@ -223,6 +222,8 @@
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.closePath();
+      context.strokeStyle = "black";
+      context.lineWidth = 1;
       context.stroke();
       context.fillStyle = this.color;
       return context.fill();
@@ -234,22 +235,73 @@
 
   Selector = (function() {
 
-    function Selector(length, end) {
+    Selector.prototype.selection = null;
+
+    function Selector(length, end, stream) {
       this.length = length;
       this.end = end;
+      this.stream = stream;
       this.index = 0;
     }
+
+    Selector.prototype.hasSelection = function() {
+      return this.selection !== null;
+    };
+
+    Selector.prototype.getSelection = function() {
+      var endIndex, pieces, startIndex;
+      console.log('making selection');
+      startIndex = (this.index + this.length) * -1;
+      endIndex = this.index * -1;
+      pieces = [];
+      if (this.index > 0) {
+        pieces = this.stream.pieces.slice(startIndex, endIndex);
+      } else {
+        pieces = this.stream.pieces.slice(startIndex);
+      }
+      return this.selection = new Branch(pieces.reverse());
+    };
+
+    Selector.prototype.putSelection = function() {
+      return this.selection = null;
+    };
 
     Selector.prototype.update = function(key) {
       if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.end) {
         this.index = this.index + 1;
       }
       if (key.pressed[key.codes.LEFT] && this.index > 0) {
-        return this.index = this.index - 1;
+        this.index = this.index - 1;
       }
+      if (key.pressed[key.codes.DOWN]) this.getSelection();
+      if (key.pressed[key.codes.UP]) return this.putSelection();
     };
 
     return Selector;
+
+  })();
+
+  Branch = (function() {
+
+    function Branch(pieces) {
+      this.pieces = pieces;
+    }
+
+    Branch.prototype.draw = function(context) {
+      var piece, x, y, _i, _len, _ref, _results;
+      x = 22.5;
+      y = 360;
+      _ref = this.pieces;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        piece = _ref[_i];
+        piece.draw(context, x, y);
+        _results.push(x = x + 45);
+      }
+      return _results;
+    };
+
+    return Branch;
 
   })();
 

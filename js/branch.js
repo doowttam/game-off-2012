@@ -152,13 +152,8 @@
       _results2 = [];
       for (_j = 0, _len = coords.length; _j < _len; _j++) {
         coord = coords[_j];
-        this.context.beginPath();
-        this.context.moveTo(coord[0], coord[1]);
-        this.context.lineTo(coord[0] + size, coord[1]);
-        this.context.closePath();
-        this.context.strokeStyle = "red";
-        this.context.lineWidth = 5;
-        _results2.push(this.context.stroke());
+        this.context.fillStyle = 'rgba(246,255,0,.5)';
+        _results2.push(this.context.fillRect(coord[0], coord[1], size, size));
       }
       return _results2;
     };
@@ -177,8 +172,8 @@
       this.context.closePath();
       this.context.strokeStyle = "black";
       this.context.stroke();
-      this.drawPieces();
       this.drawSel();
+      this.drawPieces();
       if (this.sel.hasSelection()) return this.sel.selection.draw(this.context);
     };
 

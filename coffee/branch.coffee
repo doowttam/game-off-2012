@@ -99,16 +99,8 @@ class Grid
     coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
 
     for coord in coords
-      @context.beginPath()
-
-      @context.moveTo coord[0], coord[1]
-      @context.lineTo coord[0] + size, coord[1]
-
-      @context.closePath()
-
-      @context.strokeStyle = "red"
-      @context.lineWidth = 5
-      @context.stroke()
+      @context.fillStyle = 'rgba(246,255,0,.5)'
+      @context.fillRect coord[0], coord[1], size, size
 
   draw: (canvas) ->
     @context.beginPath()
@@ -125,8 +117,8 @@ class Grid
     @context.strokeStyle = "black"
     @context.stroke()
 
-    @drawPieces()
     @drawSel()
+    @drawPieces()
 
     if @sel.hasSelection()
       @sel.selection.draw(@context)

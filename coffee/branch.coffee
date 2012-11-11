@@ -16,7 +16,7 @@ class BranchGame
       @key.onKeyDown e
 
     @stream = new Stream
-    @sel    = new Selector 7, @stream.length, @stream
+    @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
 
     @frame = 0
@@ -73,7 +73,9 @@ class Key
 class Stream
   colors: ["red", "blue", "green", "yellow", "orange"]
   pieces: []
-  length: 105 # FIXME: This needs to be calculated, not hard coded
+
+  constructor: ->
+    @addPiece() for i in [1..7]
 
   addPiece: ->
     color = Math.floor(Math.random() * @colors.length)
@@ -167,7 +169,7 @@ class Piece
 class Selector
   selection: null
 
-  constructor: (@length, @end, @stream) ->
+  constructor: (@length, @stream) ->
     @index = 0
 
   hasSelection: -> @selection != null
@@ -192,7 +194,7 @@ class Selector
     @selection = null
 
   update: (key) ->
-    if key.pressed[key.codes.RIGHT] and (@index + @length) < @end
+    if key.pressed[key.codes.RIGHT] and (@index + @length) < @stream.pieces.length
       @index = @index + 1
 
     if key.pressed[key.codes.LEFT] and @index > 0

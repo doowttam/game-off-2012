@@ -27,7 +27,7 @@
         return _this.key.onKeyDown(e);
       };
       this.stream = new Stream;
-      this.sel = new Selector(7, this.stream.length, this.stream);
+      this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.frame = 0;
     }
@@ -96,13 +96,16 @@
 
   Stream = (function() {
 
-    function Stream() {}
-
     Stream.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
 
     Stream.prototype.pieces = [];
 
-    Stream.prototype.length = 105;
+    function Stream() {
+      var i;
+      for (i = 1; i <= 7; i++) {
+        this.addPiece();
+      }
+    }
 
     Stream.prototype.addPiece = function() {
       var color;
@@ -237,9 +240,8 @@
 
     Selector.prototype.selection = null;
 
-    function Selector(length, end, stream) {
+    function Selector(length, stream) {
       this.length = length;
-      this.end = end;
       this.stream = stream;
       this.index = 0;
     }
@@ -278,7 +280,7 @@
     };
 
     Selector.prototype.update = function(key) {
-      if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.end) {
+      if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.stream.pieces.length) {
         this.index = this.index + 1;
       }
       if (key.pressed[key.codes.LEFT] && this.index > 0) {

@@ -1,4 +1,6 @@
 class BranchGame
+  lastActivated = (new Date()).getTime()
+
   constructor: (@doc, @win) ->
     @canvas  = @doc.getElementById("game_canvas")
     @context = @canvas.getContext("2d")
@@ -18,8 +20,14 @@ class BranchGame
     @stream = new Stream
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
+    @wsp    = new Workspace @context
 
     @frame = 0
+
+  update: ->
+    if @key.pressed[@key.codes.SPACE] and (new Date()).getTime() - lastActivated > 200
+      lastActivated  = (new Date()).getTime()
+      @wsp.activated = !@wsp.activated
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -27,6 +35,8 @@ class BranchGame
   drawFrame: =>
     @frame++
 
+    @update()
+    @grid.update @key
     @sel.update @key
 
     @resetCanvas()
@@ -35,6 +45,7 @@ class BranchGame
       @stream.addPiece()
 
     @grid.draw @canvas
+    @wsp.draw()
 
     requestAnimationFrame @drawFrame if @running
 
@@ -87,6 +98,13 @@ class Grid
   constructor: (@context, canvas, @stream, @sel) ->
     @spotsPerLine = Math.floor(canvas.width / size)
     @height       = canvas.height - size * 2
+
+  update: (key) ->
+    if key.pressed[key.codes.DOWN]
+      @sel.getSelection()
+
+    if key.pressed[key.codes.UP] and @sel.hasSelection()
+      @sel.putSelection()
 
   drawPieces: () ->
     if @stream.pieces.length > 0
@@ -141,6 +159,28 @@ class Grid
       col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
       [col * 45, row * 45]
 
+class Workspace
+  lastActivated = 0
+  size          = 0
+
+  constructor: (@context) ->
+    @activated = false
+
+  draw: () ->
+    if @activated
+      @context.beginPath()
+
+      @context.moveTo 0, 315
+      @context.lineTo 675, 315
+      @context.lineTo 745, 405
+      @context.lineTo 0, 405
+      @context.lineTo 0, 315
+
+      @context.closePath()
+      @context.strokeStyle = "red"
+      @context.lineWidth = 5
+      @context.stroke()
+
 class Piece
   radius = 15
 
@@ -191,13 +231,6 @@ class Selector
 
     if key.pressed[key.codes.LEFT] and @index > 0
       @index = @index - 1
-
-    if key.pressed[key.codes.DOWN]
-      @getSelection()
-
-    if key.pressed[key.codes.UP]
-      if @hasSelection()
-        @putSelection()
 
 class Branch
     constructor: (@pieces) ->

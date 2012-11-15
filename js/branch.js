@@ -1,8 +1,11 @@
 (function() {
-  var Branch, BranchGame, Grid, Key, Piece, Selector, Stream,
+  var Branch, BranchGame, Grid, Key, Piece, Selector, Stream, Workspace,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   BranchGame = (function() {
+    var lastActivated;
+
+    lastActivated = (new Date()).getTime();
 
     function BranchGame(doc, win) {
       var _this = this;
@@ -29,8 +32,16 @@
       this.stream = new Stream;
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
+      this.wsp = new Workspace(this.context);
       this.frame = 0;
     }
+
+    BranchGame.prototype.update = function() {
+      if (this.key.pressed[this.key.codes.SPACE] && (new Date()).getTime() - lastActivated > 200) {
+        lastActivated = (new Date()).getTime();
+        return this.wsp.activated = !this.wsp.activated;
+      }
+    };
 
     BranchGame.prototype.resetCanvas = function() {
       return this.canvas.width = this.canvas.width;
@@ -38,10 +49,13 @@
 
     BranchGame.prototype.drawFrame = function() {
       this.frame++;
+      this.update();
+      this.grid.update(this.key);
       this.sel.update(this.key);
       this.resetCanvas();
       if (this.frame % 120 === 0) this.stream.addPiece();
       this.grid.draw(this.canvas);
+      this.wsp.draw();
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 
@@ -130,6 +144,13 @@
       this.height = canvas.height - size * 2;
     }
 
+    Grid.prototype.update = function(key) {
+      if (key.pressed[key.codes.DOWN]) this.sel.getSelection();
+      if (key.pressed[key.codes.UP] && this.sel.hasSelection()) {
+        return this.sel.putSelection();
+      }
+    };
+
     Grid.prototype.drawPieces = function() {
       var num, spots, _ref, _results;
       if (this.stream.pieces.length > 0) {
@@ -207,6 +228,37 @@
 
   })();
 
+  Workspace = (function() {
+    var lastActivated, size;
+
+    lastActivated = 0;
+
+    size = 0;
+
+    function Workspace(context) {
+      this.context = context;
+      this.activated = false;
+    }
+
+    Workspace.prototype.draw = function() {
+      if (this.activated) {
+        this.context.beginPath();
+        this.context.moveTo(0, 315);
+        this.context.lineTo(675, 315);
+        this.context.lineTo(745, 405);
+        this.context.lineTo(0, 405);
+        this.context.lineTo(0, 315);
+        this.context.closePath();
+        this.context.strokeStyle = "red";
+        this.context.lineWidth = 5;
+        return this.context.stroke();
+      }
+    };
+
+    return Workspace;
+
+  })();
+
   Piece = (function() {
     var radius;
 
@@ -279,11 +331,7 @@
         this.index = this.index + 1;
       }
       if (key.pressed[key.codes.LEFT] && this.index > 0) {
-        this.index = this.index - 1;
-      }
-      if (key.pressed[key.codes.DOWN]) this.getSelection();
-      if (key.pressed[key.codes.UP]) {
-        if (this.hasSelection()) return this.putSelection();
+        return this.index = this.index - 1;
       }
     };
 

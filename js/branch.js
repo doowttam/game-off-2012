@@ -1,8 +1,10 @@
 (function() {
-  var Branch, BranchGame, Grid, Key, Piece, Selector, Stream, Workspace,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var Board, Branch, Grid, Key, Piece, PieceList, Selector, Stream, Workspace,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = Object.prototype.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  BranchGame = (function() {
+  window.BranchGame = (function() {
     var lastActivated;
 
     lastActivated = (new Date()).getTime();
@@ -32,7 +34,7 @@
       this.stream = new Stream;
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
-      this.wsp = new Workspace(this.context);
+      this.wsp = new Workspace(this.context, this.canvas);
       this.frame = 0;
     }
 
@@ -108,14 +110,71 @@
 
   })();
 
-  Stream = (function() {
+  Board = (function() {
 
-    Stream.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
+    Board.prototype.size = 45;
 
-    Stream.prototype.pieces = [];
+    Board.prototype.origX = 0;
+
+    Board.prototype.origY = 0;
+
+    function Board(canvas) {
+      this.spotsPerLine = Math.floor(canvas.width / this.size);
+    }
+
+    Board.prototype.getSpots = function(length) {
+      var col, remainder, row, rowLength, rows, spots, x, y;
+      spots = [];
+      rows = Math.ceil(length / this.spotsPerLine);
+      remainder = length % this.spotsPerLine;
+      for (row = 1; 1 <= rows ? row <= rows : row >= rows; 1 <= rows ? row++ : row--) {
+        rowLength = row === rows && remainder > 0 ? remainder : this.spotsPerLine;
+        for (col = 1; 1 <= rowLength ? col <= rowLength : col >= rowLength; 1 <= rowLength ? col++ : col--) {
+          x = this.origX + (col * this.size - (this.size / 2));
+          y = this.origY + (row * this.size - (this.size / 2));
+          spots.push([x, y]);
+        }
+      }
+      return spots;
+    };
+
+    Board.prototype.drawPieces = function(piecelist) {
+      var num, spots, _ref, _results;
+      if (piecelist.pieces.length > 0) {
+        spots = this.getSpots(piecelist.pieces.length);
+        _results = [];
+        for (num = 0, _ref = spots.length - 1; 0 <= _ref ? num <= _ref : num >= _ref; 0 <= _ref ? num++ : num--) {
+          _results.push(piecelist.pieces[piecelist.pieces.length - num - 1].draw(this.context, spots[num][0], spots[num][1]));
+        }
+        return _results;
+      }
+    };
+
+    return Board;
+
+  })();
+
+  PieceList = (function() {
+
+    PieceList.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
+
+    PieceList.prototype.pieces = [];
+
+    function PieceList(initialPieces) {
+      this.pieces = initialPieces != null ? initialPieces : [];
+    }
+
+    return PieceList;
+
+  })();
+
+  Stream = (function(_super) {
+
+    __extends(Stream, _super);
 
     function Stream() {
       var i;
+      Stream.__super__.constructor.call(this);
       for (i = 1; i <= 7; i++) {
         this.addPiece();
       }
@@ -129,37 +188,24 @@
 
     return Stream;
 
-  })();
+  })(PieceList);
 
-  Grid = (function() {
-    var size;
+  Grid = (function(_super) {
 
-    size = 45;
+    __extends(Grid, _super);
 
     function Grid(context, canvas, stream, sel) {
       this.context = context;
       this.stream = stream;
       this.sel = sel;
-      this.spotsPerLine = Math.floor(canvas.width / size);
-      this.height = canvas.height - size * 2;
+      Grid.__super__.constructor.call(this, canvas);
+      this.height = canvas.height - this.size * 2;
     }
 
     Grid.prototype.update = function(key) {
       if (key.pressed[key.codes.DOWN]) this.sel.getSelection();
       if (key.pressed[key.codes.UP] && this.sel.hasSelection()) {
         return this.sel.putSelection();
-      }
-    };
-
-    Grid.prototype.drawPieces = function() {
-      var num, spots, _ref, _results;
-      if (this.stream.pieces.length > 0) {
-        spots = this.getSpots(this.stream.pieces.length);
-        _results = [];
-        for (num = 0, _ref = spots.length - 1; 0 <= _ref ? num <= _ref : num >= _ref; 0 <= _ref ? num++ : num--) {
-          _results.push(this.stream.pieces[this.stream.pieces.length - num - 1].draw(this.context, spots[num][0], spots[num][1]));
-        }
-        return _results;
       }
     };
 
@@ -174,19 +220,19 @@
       for (_j = 0, _len = coords.length; _j < _len; _j++) {
         coord = coords[_j];
         this.context.fillStyle = 'rgba(246,255,0,.5)';
-        _results2.push(this.context.fillRect(coord[0], coord[1], size, size));
+        _results2.push(this.context.fillRect(coord[0], coord[1], this.size, this.size));
       }
       return _results2;
     };
 
     Grid.prototype.draw = function(canvas) {
-      var x, y, _ref, _ref2;
+      var x, y, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
       this.context.beginPath();
-      for (x = size, _ref = canvas.width - size; size <= _ref ? x <= _ref : x >= _ref; x += size) {
+      for (x = _ref = this.size, _ref2 = canvas.width - this.size, _ref3 = this.size; _ref <= _ref2 ? x <= _ref2 : x >= _ref2; x += _ref3) {
         this.context.moveTo(x, 0);
         this.context.lineTo(x, this.height);
       }
-      for (y = size, _ref2 = this.height; size <= _ref2 ? y <= _ref2 : y >= _ref2; y += size) {
+      for (y = _ref4 = this.size, _ref5 = this.height, _ref6 = this.size; _ref4 <= _ref5 ? y <= _ref5 : y >= _ref5; y += _ref6) {
         this.context.moveTo(0, y);
         this.context.lineTo(canvas.width, y);
       }
@@ -194,22 +240,8 @@
       this.context.strokeStyle = "black";
       this.context.stroke();
       this.drawSel();
-      this.drawPieces();
+      this.drawPieces(this.stream);
       if (this.sel.hasSelection()) return this.sel.selection.draw(this.context);
-    };
-
-    Grid.prototype.getSpots = function(length) {
-      var col, remainder, row, rowLength, rows, spots;
-      spots = [];
-      rows = Math.ceil(length / this.spotsPerLine);
-      remainder = length % this.spotsPerLine;
-      for (row = 1; 1 <= rows ? row <= rows : row >= rows; 1 <= rows ? row++ : row--) {
-        rowLength = row === rows && remainder > 0 ? remainder : this.spotsPerLine;
-        for (col = 1; 1 <= rowLength ? col <= rowLength : col >= rowLength; 1 <= rowLength ? col++ : col--) {
-          spots.push([col * size - (size / 2), row * size - (size / 2)]);
-        }
-      }
-      return spots;
     };
 
     Grid.prototype.spotsToCoords = function(spots) {
@@ -226,17 +258,19 @@
 
     return Grid;
 
-  })();
+  })(Board);
 
-  Workspace = (function() {
-    var lastActivated, size;
+  Workspace = (function(_super) {
 
-    lastActivated = 0;
+    __extends(Workspace, _super);
 
-    size = 0;
+    Workspace.prototype.origX = 0;
 
-    function Workspace(context) {
+    Workspace.prototype.origY = 337.5;
+
+    function Workspace(context, canvas) {
       this.context = context;
+      Workspace.__super__.constructor.call(this, canvas);
       this.activated = false;
     }
 
@@ -257,7 +291,7 @@
 
     return Workspace;
 
-  })();
+  })(Board);
 
   Piece = (function() {
     var radius;
@@ -339,10 +373,12 @@
 
   })();
 
-  Branch = (function() {
+  Branch = (function(_super) {
 
-    function Branch(pieces) {
-      this.pieces = pieces;
+    __extends(Branch, _super);
+
+    function Branch() {
+      Branch.__super__.constructor.apply(this, arguments);
     }
 
     Branch.prototype.draw = function(context) {
@@ -361,8 +397,6 @@
 
     return Branch;
 
-  })();
-
-  window.BranchGame = BranchGame;
+  })(PieceList);
 
 }).call(this);

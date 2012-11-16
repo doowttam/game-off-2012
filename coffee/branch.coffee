@@ -1,4 +1,4 @@
-class BranchGame
+class window.BranchGame
   lastActivated = (new Date()).getTime()
 
   constructor: (@doc, @win) ->
@@ -20,7 +20,7 @@ class BranchGame
     @stream = new Stream
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
-    @wsp    = new Workspace @context
+    @wsp    = new Workspace @context, @canvas
 
     @frame = 0
 
@@ -81,65 +81,13 @@ class Key
   onKeyUp: (event) =>
     delete @pressed[event.keyCode]
 
-class Stream
-  colors: ["red", "blue", "green", "yellow", "orange"]
-  pieces: []
+class Board
+  size: 45
+  origX: 0
+  origY: 0
 
-  constructor: ->
-    @addPiece() for i in [1..7]
-
-  addPiece: ->
-    color = Math.floor(Math.random() * @colors.length)
-    @pieces.push(new Piece @colors[color])
-
-class Grid
-  size = 45
-
-  constructor: (@context, canvas, @stream, @sel) ->
-    @spotsPerLine = Math.floor(canvas.width / size)
-    @height       = canvas.height - size * 2
-
-  update: (key) ->
-    if key.pressed[key.codes.DOWN]
-      @sel.getSelection()
-
-    if key.pressed[key.codes.UP] and @sel.hasSelection()
-      @sel.putSelection()
-
-  drawPieces: () ->
-    if @stream.pieces.length > 0
-      spots = @getSpots(@stream.pieces.length)
-
-      for num in [0..spots.length - 1]
-        @stream.pieces[@stream.pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
-
-  drawSel: () ->
-    coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
-
-    for coord in coords
-      @context.fillStyle = 'rgba(246,255,0,.5)'
-      @context.fillRect coord[0], coord[1], size, size
-
-  draw: (canvas) ->
-    @context.beginPath()
-
-    for x in [size..(canvas.width - size)] by size
-      @context.moveTo x, 0
-      @context.lineTo x, @height
-
-    for y in [size..@height] by size
-      @context.moveTo 0, y
-      @context.lineTo canvas.width, y
-
-    @context.closePath()
-    @context.strokeStyle = "black"
-    @context.stroke()
-
-    @drawSel()
-    @drawPieces()
-
-    if @sel.hasSelection()
-      @sel.selection.draw(@context)
+  constructor: (canvas) ->
+    @spotsPerLine = Math.floor(canvas.width / @size)
 
   getSpots: (length) ->
     spots     = []
@@ -149,9 +97,73 @@ class Grid
     for row in [1..rows]
       rowLength = if row == rows && remainder > 0 then remainder else @spotsPerLine
       for col in [1..rowLength]
-        spots.push [ col * size - (size/2),  row * size - (size/2) ]
-
+        x = @origX + (col * @size - (@size/2))
+        y = @origY + (row * @size - (@size/2))
+        spots.push [ x, y ]
     spots
+
+  drawPieces: (piecelist) ->
+    if piecelist.pieces.length > 0
+      spots = @getSpots(piecelist.pieces.length)
+
+      for num in [0..spots.length - 1]
+        piecelist.pieces[piecelist.pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
+
+class PieceList
+  colors: ["red", "blue", "green", "yellow", "orange"]
+  pieces: []
+
+  constructor: (initialPieces)->
+    @pieces = initialPieces ? []
+
+class Stream extends PieceList
+  constructor: ->
+    super()
+    @addPiece() for i in [1..7]
+
+  addPiece: ->
+    color = Math.floor(Math.random() * @colors.length)
+    @pieces.push(new Piece @colors[color])
+
+class Grid extends Board
+  constructor: (@context, canvas, @stream, @sel) ->
+    super canvas
+    @height = canvas.height - @size * 2
+
+  update: (key) ->
+    if key.pressed[key.codes.DOWN]
+      @sel.getSelection()
+
+    if key.pressed[key.codes.UP] and @sel.hasSelection()
+      @sel.putSelection()
+
+  drawSel: () ->
+    coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
+
+    for coord in coords
+      @context.fillStyle = 'rgba(246,255,0,.5)'
+      @context.fillRect coord[0], coord[1], @size, @size
+
+  draw: (canvas) ->
+    @context.beginPath()
+
+    for x in [@size..(canvas.width - @size)] by @size
+      @context.moveTo x, 0
+      @context.lineTo x, @height
+
+    for y in [@size..@height] by @size
+      @context.moveTo 0, y
+      @context.lineTo canvas.width, y
+
+    @context.closePath()
+    @context.strokeStyle = "black"
+    @context.stroke()
+
+    @drawSel()
+    @drawPieces @stream
+
+    if @sel.hasSelection()
+      @sel.selection.draw(@context)
 
   spotsToCoords: (spots) ->
     for spot in spots
@@ -159,11 +171,12 @@ class Grid
       col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
       [col * 45, row * 45]
 
-class Workspace
-  lastActivated = 0
-  size          = 0
+class Workspace extends Board
+  origX: 0
+  origY: 337.5
 
-  constructor: (@context) ->
+  constructor: (@context, canvas) ->
+    super canvas
     @activated = false
 
   draw: () ->
@@ -232,14 +245,10 @@ class Selector
     if key.pressed[key.codes.LEFT] and @index > 0
       @index = @index - 1
 
-class Branch
-    constructor: (@pieces) ->
-
+class Branch extends PieceList
     draw: (context) ->
       x = 22.5
       y = 360
       for piece in @pieces
         piece.draw context, x, y
         x = x + 45
-
-window.BranchGame = BranchGame

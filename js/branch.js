@@ -38,10 +38,21 @@
       this.frame = 0;
     }
 
+    BranchGame.prototype.gridActivated = function() {
+      return !this.wsp.activated;
+    };
+
+    BranchGame.prototype.wspActivated = function() {
+      return this.wsp.activated;
+    };
+
     BranchGame.prototype.update = function() {
       if (this.key.pressed[this.key.codes.SPACE] && (new Date()).getTime() - lastActivated > 200) {
         lastActivated = (new Date()).getTime();
-        return this.wsp.activated = !this.wsp.activated;
+        this.wsp.activated = !this.wsp.activated;
+      }
+      if (this.key.pressed[this.key.codes.DOWN] && this.gridActivated()) {
+        return this.wsp.addSelection(this.grid.getSelection());
       }
     };
 
@@ -196,14 +207,13 @@
 
     function Grid(context, canvas, stream, sel) {
       this.context = context;
-      this.stream = stream;
       this.sel = sel;
       Grid.__super__.constructor.call(this, canvas);
       this.height = canvas.height - this.size * 2;
+      this.piecelist = stream;
     }
 
     Grid.prototype.update = function(key) {
-      if (key.pressed[key.codes.DOWN]) this.sel.getSelection();
       if (key.pressed[key.codes.UP] && this.sel.hasSelection()) {
         return this.sel.putSelection();
       }
@@ -240,8 +250,7 @@
       this.context.strokeStyle = "black";
       this.context.stroke();
       this.drawSel();
-      this.drawPieces(this.stream);
-      if (this.sel.hasSelection()) return this.sel.selection.draw(this.context);
+      return this.drawPieces(this.piecelist);
     };
 
     Grid.prototype.spotsToCoords = function(spots) {
@@ -256,6 +265,27 @@
       return _results;
     };
 
+    Grid.prototype.getSelection = function() {
+      var endIndex, piece, pieces, startIndex;
+      startIndex = (this.sel.index + this.sel.length) * -1;
+      endIndex = this.sel.index * -1;
+      pieces = [];
+      if (this.sel.index > 0) {
+        pieces = this.piecelist.pieces.slice(startIndex, endIndex);
+      } else {
+        pieces = this.piecelist.pieces.slice(startIndex);
+      }
+      return new Branch((function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = pieces.length; _i < _len; _i++) {
+          piece = pieces[_i];
+          _results.push(new Piece(piece.color));
+        }
+        return _results;
+      })());
+    };
+
     return Grid;
 
   })(Board);
@@ -268,13 +298,21 @@
 
     Workspace.prototype.origY = 337.5;
 
+    Workspace.prototype.piecelist = null;
+
+    Workspace.prototype.activated = false;
+
     function Workspace(context, canvas) {
       this.context = context;
       Workspace.__super__.constructor.call(this, canvas);
-      this.activated = false;
     }
 
+    Workspace.prototype.addSelection = function(branch) {
+      return this.piecelist = branch;
+    };
+
     Workspace.prototype.draw = function() {
+      if (this.piecelist) this.drawPieces(this.piecelist);
       if (this.activated) {
         this.context.beginPath();
         this.context.moveTo(0, 315);
@@ -327,32 +365,6 @@
       this.index = 0;
     }
 
-    Selector.prototype.hasSelection = function() {
-      return this.selection !== null;
-    };
-
-    Selector.prototype.getSelection = function() {
-      var endIndex, piece, pieces, startIndex;
-      startIndex = (this.index + this.length) * -1;
-      endIndex = this.index * -1;
-      pieces = [];
-      if (this.index > 0) {
-        pieces = this.stream.pieces.slice(startIndex, endIndex);
-      } else {
-        pieces = this.stream.pieces.slice(startIndex);
-      }
-      return this.selection = new Branch((function() {
-        var _i, _len, _ref, _results;
-        _ref = pieces.reverse();
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          piece = _ref[_i];
-          _results.push(new Piece(piece.color));
-        }
-        return _results;
-      })());
-    };
-
     Selector.prototype.putSelection = function() {
       var endIndex;
       endIndex = (this.index + this.length) * -1;
@@ -380,20 +392,6 @@
     function Branch() {
       Branch.__super__.constructor.apply(this, arguments);
     }
-
-    Branch.prototype.draw = function(context) {
-      var piece, x, y, _i, _len, _ref, _results;
-      x = 22.5;
-      y = 360;
-      _ref = this.pieces;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        piece = _ref[_i];
-        piece.draw(context, x, y);
-        _results.push(x = x + 45);
-      }
-      return _results;
-    };
 
     return Branch;
 

@@ -24,10 +24,16 @@ class window.BranchGame
 
     @frame = 0
 
+  gridActivated: -> !@wsp.activated
+  wspActivated:  -> @wsp.activated
+
   update: ->
     if @key.pressed[@key.codes.SPACE] and (new Date()).getTime() - lastActivated > 200
       lastActivated  = (new Date()).getTime()
       @wsp.activated = !@wsp.activated
+
+    if @key.pressed[@key.codes.DOWN] and @gridActivated()
+      @wsp.addSelection @grid.getSelection()
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -103,6 +109,7 @@ class Board
     spots
 
   drawPieces: (piecelist) ->
+    # Note: draws pieces in reverse
     if piecelist.pieces.length > 0
       spots = @getSpots(piecelist.pieces.length)
 
@@ -126,14 +133,12 @@ class Stream extends PieceList
     @pieces.push(new Piece @colors[color])
 
 class Grid extends Board
-  constructor: (@context, canvas, @stream, @sel) ->
+  constructor: (@context, canvas, stream, @sel) ->
     super canvas
-    @height = canvas.height - @size * 2
+    @height    = canvas.height - @size * 2
+    @piecelist = stream
 
   update: (key) ->
-    if key.pressed[key.codes.DOWN]
-      @sel.getSelection()
-
     if key.pressed[key.codes.UP] and @sel.hasSelection()
       @sel.putSelection()
 
@@ -160,10 +165,7 @@ class Grid extends Board
     @context.stroke()
 
     @drawSel()
-    @drawPieces @stream
-
-    if @sel.hasSelection()
-      @sel.selection.draw(@context)
+    @drawPieces @piecelist
 
   spotsToCoords: (spots) ->
     for spot in spots
@@ -171,15 +173,36 @@ class Grid extends Board
       col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
       [col * 45, row * 45]
 
+  getSelection: ->
+    # Our selection is indexed from the point where the stream grows,
+    # so it's indexed in the oppisite way from the stream
+    startIndex = (@sel.index + @sel.length) * -1
+    endIndex   = @sel.index * -1
+
+    pieces = []
+    if @sel.index > 0
+      pieces = @piecelist.pieces.slice startIndex, endIndex
+    else
+      pieces = @piecelist.pieces.slice startIndex
+
+    new Branch (new Piece piece.color for piece in pieces)
+
 class Workspace extends Board
   origX: 0
   origY: 337.5
+  piecelist: null
+  activated: false
 
   constructor: (@context, canvas) ->
     super canvas
-    @activated = false
+
+  addSelection: (branch) ->
+    @piecelist = branch
 
   draw: () ->
+    if @piecelist
+      @drawPieces @piecelist
+
     if @activated
       @context.beginPath()
 
@@ -217,22 +240,6 @@ class Selector
   constructor: (@length, @stream) ->
     @index = 0
 
-  hasSelection: -> @selection != null
-
-  getSelection: ->
-    # Our selection is indexed from the point where the stream grows,
-    # so it's indexed in the oppisite way from the stream
-    startIndex = (@index + @length) * -1
-    endIndex   = @index * -1
-
-    pieces = []
-    if @index > 0
-      pieces = @stream.pieces.slice startIndex, endIndex
-    else
-      pieces = @stream.pieces.slice startIndex
-
-    @selection = new Branch (new Piece piece.color for piece in pieces.reverse())
-
   putSelection: ->
     endIndex = (@index + @length) * -1
     @stream.pieces.splice.apply @stream.pieces, [endIndex, @selection.pieces.length].concat(@selection.pieces.reverse())
@@ -246,9 +253,3 @@ class Selector
       @index = @index - 1
 
 class Branch extends PieceList
-    draw: (context) ->
-      x = 22.5
-      y = 360
-      for piece in @pieces
-        piece.draw context, x, y
-        x = x + 45

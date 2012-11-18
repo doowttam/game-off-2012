@@ -1,13 +1,35 @@
 (function() {
-  var Board, Branch, Grid, Key, Piece, PieceList, Selector, Stream, Workspace,
+  var Board, Branch, Grid, Key, MeteredMover, Piece, PieceList, Selector, Stream, Workspace,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  window.BranchGame = (function() {
-    var lastActivated;
+  MeteredMover = (function() {
 
-    lastActivated = (new Date()).getTime();
+    MeteredMover.prototype.maxFreqMS = 200;
+
+    function MeteredMover() {
+      this.lastActed = {};
+    }
+
+    MeteredMover.prototype.isPressed = function(keyCode, actionKey, key, id) {
+      var actionAllowed;
+      actionAllowed = !(this.lastActed[actionKey] != null) || (new Date()).getTime() - this.lastActed[actionKey] > this.maxFreqMS;
+      if (key.pressed[keyCode] && actionAllowed) {
+        this.lastActed[actionKey] = (new Date()).getTime();
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return MeteredMover;
+
+  })();
+
+  window.BranchGame = (function(_super) {
+
+    __extends(BranchGame, _super);
 
     function BranchGame(doc, win) {
       var _this = this;
@@ -16,6 +38,7 @@
       this.pause = __bind(this.pause, this);
       this.play = __bind(this.play, this);
       this.drawFrame = __bind(this.drawFrame, this);
+      BranchGame.__super__.constructor.call(this);
       this.canvas = this.doc.getElementById("game_canvas");
       this.context = this.canvas.getContext("2d");
       this.buttons = {
@@ -40,8 +63,7 @@
     }
 
     BranchGame.prototype.update = function() {
-      if (this.key.pressed[this.key.codes.SPACE] && (new Date()).getTime() - lastActivated > 200) {
-        lastActivated = (new Date()).getTime();
+      if (this.isPressed(this.key.codes.SPACE, "activateWSP", this.key)) {
         if (this.wsp.activated) {
           this.wsp.activated = false;
           this.grid.activated = true;
@@ -50,10 +72,10 @@
           this.grid.activated = false;
         }
       }
-      if (this.key.pressed[this.key.codes.DOWN] && this.grid.activated) {
+      if (this.isPressed(this.key.codes.DOWN, "getGridSelection", this.key) && this.grid.activated) {
         this.wsp.addBranch(this.grid.getSelection());
       }
-      if (this.key.pressed[this.key.codes.UP] && this.grid.activated && this.wsp.hasBranch()) {
+      if (this.isPressed(this.key.codes.UP, "putWSPSelection", this.key) && this.grid.activated && this.wsp.hasBranch()) {
         return this.grid.putSelection(this.wsp.getBranch());
       }
     };
@@ -87,7 +109,7 @@
 
     return BranchGame;
 
-  })();
+  })(MeteredMover);
 
   Key = (function() {
 
@@ -123,7 +145,9 @@
 
   })();
 
-  Board = (function() {
+  Board = (function(_super) {
+
+    __extends(Board, _super);
 
     Board.prototype.size = 45;
 
@@ -134,6 +158,7 @@
     Board.prototype.activated = false;
 
     function Board(canvas) {
+      Board.__super__.constructor.call(this);
       this.spotsPerLine = Math.floor(canvas.width / this.size);
     }
 
@@ -195,7 +220,7 @@
 
     return Board;
 
-  })();
+  })(MeteredMover);
 
   PieceList = (function() {
 
@@ -210,7 +235,6 @@
     PieceList.prototype.nextColor = function(color) {
       var index;
       index = this.colors.indexOf(color);
-      console.log(color);
       if (index === this.colors.length - 1) {
         return this.colors[0];
       } else {
@@ -337,8 +361,8 @@
     Workspace.prototype.update = function(key) {
       if (this.hasBranch() && (this.sel != null) && this.activated) {
         this.sel.update(key);
-        if (key.pressed[key.codes.DOWN]) this.cycleDown();
-        if (key.pressed[key.codes.UP]) return console.log('up');
+        if (this.isPressed(key.codes.DOWN, "cycleDown", key)) this.cycleDown();
+        if (this.isPressed(key.codes.UP, "cycleUp", key)) return console.log('up');
       }
     };
 
@@ -403,29 +427,31 @@
 
   })();
 
-  Selector = (function() {
+  Selector = (function(_super) {
+
+    __extends(Selector, _super);
 
     Selector.prototype.selection = null;
 
-    function Selector(length, stream, parent) {
+    function Selector(length, stream) {
       this.length = length;
       this.stream = stream;
-      this.parent = parent;
+      Selector.__super__.constructor.call(this);
       this.index = 0;
     }
 
     Selector.prototype.update = function(key) {
-      if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.stream.pieces.length) {
+      if (this.isPressed(key.codes.RIGHT, "moveSelRight", key) && (this.index + this.length) < this.stream.pieces.length) {
         this.index = this.index + 1;
       }
-      if (key.pressed[key.codes.LEFT] && this.index > 0) {
+      if (this.isPressed(key.codes.LEFT, "moveSelLeft", key) && this.index > 0) {
         return this.index = this.index - 1;
       }
     };
 
     return Selector;
 
-  })();
+  })(MeteredMover);
 
   Branch = (function(_super) {
 

@@ -1,7 +1,21 @@
-class window.BranchGame
-  lastActivated = (new Date()).getTime()
+class MeteredMover
+  maxFreqMS: 200
 
+  constructor: -> @lastActed = {}
+
+  isPressed: (keyCode, actionKey, key, id) ->
+    actionAllowed = !@lastActed[actionKey]? or (new Date()).getTime() - @lastActed[actionKey] > @maxFreqMS
+
+    if key.pressed[keyCode] and actionAllowed
+      @lastActed[actionKey] = (new Date()).getTime()
+      true
+    else
+      false
+
+class window.BranchGame extends MeteredMover
   constructor: (@doc, @win) ->
+    super()
+
     @canvas  = @doc.getElementById("game_canvas")
     @context = @canvas.getContext("2d")
     @buttons =
@@ -27,9 +41,7 @@ class window.BranchGame
     @frame = 0
 
   update: ->
-    if @key.pressed[@key.codes.SPACE] and (new Date()).getTime() - lastActivated > 200
-      lastActivated  = (new Date()).getTime()
-
+    if @isPressed @key.codes.SPACE, "activateWSP", @key
       if @wsp.activated
         @wsp.activated  = false
         @grid.activated = true
@@ -37,10 +49,10 @@ class window.BranchGame
         @wsp.activate()
         @grid.activated = false
 
-    if @key.pressed[@key.codes.DOWN] and @grid.activated
+    if @isPressed(@key.codes.DOWN, "getGridSelection", @key) and @grid.activated
       @wsp.addBranch @grid.getSelection()
 
-    if @key.pressed[@key.codes.UP] and @grid.activated and @wsp.hasBranch()
+    if @isPressed(@key.codes.UP, "putWSPSelection", @key) and @grid.activated and @wsp.hasBranch()
       @grid.putSelection @wsp.getBranch()
 
   resetCanvas: ->
@@ -95,13 +107,14 @@ class Key
   onKeyUp: (event) =>
     delete @pressed[event.keyCode]
 
-class Board
+class Board extends MeteredMover
   size: 45
   origX: 0
   origY: 0
   activated: false
 
   constructor: (canvas) ->
+    super()
     @spotsPerLine = Math.floor(canvas.width / @size)
 
   getSpots: (length) ->
@@ -147,7 +160,6 @@ class PieceList
 
   nextColor: (color) ->
     index = @colors.indexOf color
-    console.log color
 
     if index == @colors.length - 1
       @colors[0]
@@ -227,10 +239,10 @@ class Workspace extends Board
     if @hasBranch() and @sel? and @activated
       @sel.update key
 
-      if key.pressed[key.codes.DOWN]
+      if @isPressed key.codes.DOWN, "cycleDown", key
         @cycleDown()
 
-      if key.pressed[key.codes.UP]
+      if @isPressed key.codes.UP, "cycleUp", key
         console.log 'up'
 
   hasBranch: -> @piecelist?
@@ -280,17 +292,18 @@ class Piece
     context.fillStyle = @color
     context.fill()
 
-class Selector
+class Selector extends MeteredMover
   selection: null
 
-  constructor: (@length, @stream, @parent) ->
+  constructor: (@length, @stream) ->
+    super()
     @index = 0
 
   update: (key) ->
-    if key.pressed[key.codes.RIGHT] and (@index + @length) < @stream.pieces.length
+    if @isPressed(key.codes.RIGHT, "moveSelRight", key) and (@index + @length) < @stream.pieces.length
       @index = @index + 1
 
-    if key.pressed[key.codes.LEFT] and @index > 0
+    if @isPressed(key.codes.LEFT, "moveSelLeft", key) and @index > 0
       @index = @index - 1
 
 class Branch extends PieceList

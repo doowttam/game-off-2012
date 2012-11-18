@@ -22,20 +22,25 @@ class window.BranchGame
     @grid   = new Grid @context, @canvas, @stream, @sel
     @wsp    = new Workspace @context, @canvas
 
-    @frame = 0
+    @grid.activated = true
 
-  gridActivated: -> !@wsp.activated
-  wspActivated:  -> @wsp.activated
+    @frame = 0
 
   update: ->
     if @key.pressed[@key.codes.SPACE] and (new Date()).getTime() - lastActivated > 200
       lastActivated  = (new Date()).getTime()
-      @wsp.activated = !@wsp.activated
 
-    if @key.pressed[@key.codes.DOWN] and @gridActivated()
+      if @wsp.activated
+        @wsp.activated  = false
+        @grid.activated = true
+      else
+        @wsp.activate()
+        @grid.activated = false
+
+    if @key.pressed[@key.codes.DOWN] and @grid.activated
       @wsp.addBranch @grid.getSelection()
 
-    if @key.pressed[@key.codes.UP] and @gridActivated() and @wsp.hasBranch()
+    if @key.pressed[@key.codes.UP] and @grid.activated and @wsp.hasBranch()
       @grid.putSelection @wsp.getBranch()
 
   resetCanvas: ->
@@ -46,6 +51,7 @@ class window.BranchGame
 
     @update()
     @sel.update @key
+    @wsp.update @key
 
     @resetCanvas()
 
@@ -93,6 +99,7 @@ class Board
   size: 45
   origX: 0
   origY: 0
+  activated: false
 
   constructor: (canvas) ->
     @spotsPerLine = Math.floor(canvas.width / @size)
@@ -118,12 +125,34 @@ class Board
       for num in [0..spots.length - 1]
         piecelist.pieces[piecelist.pieces.length - num - 1].draw @context, spots[num][0], spots[num][1]
 
+  drawSel: () ->
+    coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
+
+    for coord in coords
+      @context.fillStyle = 'rgba(246,255,0,.5)'
+      @context.fillRect coord[0], coord[1], @size, @size
+
+  spotsToCoords: (spots) ->
+    for spot in spots
+      row = Math.floor spot / @spotsPerLine
+      col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
+      [@origX + (col * 45), @origY + (row * 45)]
+
 class PieceList
   colors: ["red", "blue", "green", "yellow", "orange"]
   pieces: []
 
   constructor: (initialPieces)->
     @pieces = initialPieces ? []
+
+  nextColor: (color) ->
+    index = @colors.indexOf color
+    console.log color
+
+    if index == @colors.length - 1
+      @colors[0]
+    else
+      @colors[index + 1]
 
 class Stream extends PieceList
   constructor: ->
@@ -140,13 +169,6 @@ class Grid extends Board
     @height    = canvas.height - @size * 2
     @piecelist = stream
 
-  drawSel: () ->
-    coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
-
-    for coord in coords
-      @context.fillStyle = 'rgba(246,255,0,.5)'
-      @context.fillRect coord[0], coord[1], @size, @size
-
   draw: (canvas) ->
     @context.beginPath()
 
@@ -162,14 +184,8 @@ class Grid extends Board
     @context.strokeStyle = "black"
     @context.stroke()
 
-    @drawSel()
+    @drawSel() if @activated
     @drawPieces @piecelist
-
-  spotsToCoords: (spots) ->
-    for spot in spots
-      row = Math.floor spot / @spotsPerLine
-      col = if spot >= @spotsPerLine then spot % @spotsPerLine else spot
-      [col * 45, row * 45]
 
   getSelection: ->
     # Our selection is indexed from the point where the stream grows,
@@ -183,7 +199,7 @@ class Grid extends Board
     else
       pieces = @piecelist.pieces.slice startIndex
 
-    new Branch (new Piece piece.color for piece in pieces)
+    new Branch(new Piece piece.color for piece in pieces)
 
   putSelection: (branch) ->
     endIndex = (@sel.index + @sel.length) * -1
@@ -193,10 +209,29 @@ class Workspace extends Board
   origX: 0
   origY: 337.5
   piecelist: null
-  activated: false
 
-  constructor: (@context, canvas) ->
+  constructor: (@context, canvas, @sel) ->
     super canvas
+
+  activate: ->
+    @activated = true
+    @sel = new Selector 1, @piecelist if @hasBranch()
+
+  cycleDown: ->
+    index        = @piecelist.pieces.length - @sel.index - 1
+    currentColor = @piecelist.pieces[index].color
+    newPiece     = new Piece @piecelist.nextColor currentColor
+    @piecelist.pieces.splice index, 1, newPiece
+
+  update: (key) ->
+    if @hasBranch() and @sel? and @activated
+      @sel.update key
+
+      if key.pressed[key.codes.DOWN]
+        @cycleDown()
+
+      if key.pressed[key.codes.UP]
+        console.log 'up'
 
   hasBranch: -> @piecelist?
 
@@ -206,11 +241,11 @@ class Workspace extends Board
   getBranch: ->
     branchCopy = @piecelist
     @piecelist = null
+    @sel       = null
     branchCopy
 
   draw: () ->
-    if @piecelist
-      @drawPieces @piecelist
+    if @piecelist then @drawPieces @piecelist
 
     if @activated
       @context.beginPath()
@@ -225,6 +260,8 @@ class Workspace extends Board
       @context.strokeStyle = "red"
       @context.lineWidth = 5
       @context.stroke()
+
+      @drawSel() if @sel?
 
 class Piece
   radius = 15
@@ -246,7 +283,7 @@ class Piece
 class Selector
   selection: null
 
-  constructor: (@length, @stream) ->
+  constructor: (@length, @stream, @parent) ->
     @index = 0
 
   update: (key) ->

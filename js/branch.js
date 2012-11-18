@@ -35,26 +35,25 @@
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
+      this.grid.activated = true;
       this.frame = 0;
     }
-
-    BranchGame.prototype.gridActivated = function() {
-      return !this.wsp.activated;
-    };
-
-    BranchGame.prototype.wspActivated = function() {
-      return this.wsp.activated;
-    };
 
     BranchGame.prototype.update = function() {
       if (this.key.pressed[this.key.codes.SPACE] && (new Date()).getTime() - lastActivated > 200) {
         lastActivated = (new Date()).getTime();
-        this.wsp.activated = !this.wsp.activated;
+        if (this.wsp.activated) {
+          this.wsp.activated = false;
+          this.grid.activated = true;
+        } else {
+          this.wsp.activate();
+          this.grid.activated = false;
+        }
       }
-      if (this.key.pressed[this.key.codes.DOWN] && this.gridActivated()) {
+      if (this.key.pressed[this.key.codes.DOWN] && this.grid.activated) {
         this.wsp.addBranch(this.grid.getSelection());
       }
-      if (this.key.pressed[this.key.codes.UP] && this.gridActivated() && this.wsp.hasBranch()) {
+      if (this.key.pressed[this.key.codes.UP] && this.grid.activated && this.wsp.hasBranch()) {
         return this.grid.putSelection(this.wsp.getBranch());
       }
     };
@@ -67,6 +66,7 @@
       this.frame++;
       this.update();
       this.sel.update(this.key);
+      this.wsp.update(this.key);
       this.resetCanvas();
       if (this.frame % 120 === 0) this.stream.addPiece();
       this.grid.draw(this.canvas);
@@ -131,6 +131,8 @@
 
     Board.prototype.origY = 0;
 
+    Board.prototype.activated = false;
+
     function Board(canvas) {
       this.spotsPerLine = Math.floor(canvas.width / this.size);
     }
@@ -163,6 +165,34 @@
       }
     };
 
+    Board.prototype.drawSel = function() {
+      var coord, coords, _i, _j, _len, _ref, _ref2, _results, _results2;
+      coords = this.spotsToCoords((function() {
+        _results = [];
+        for (var _i = _ref = this.sel.index, _ref2 = this.sel.index + this.sel.length - 1; _ref <= _ref2 ? _i <= _ref2 : _i >= _ref2; _ref <= _ref2 ? _i++ : _i--){ _results.push(_i); }
+        return _results;
+      }).apply(this));
+      _results2 = [];
+      for (_j = 0, _len = coords.length; _j < _len; _j++) {
+        coord = coords[_j];
+        this.context.fillStyle = 'rgba(246,255,0,.5)';
+        _results2.push(this.context.fillRect(coord[0], coord[1], this.size, this.size));
+      }
+      return _results2;
+    };
+
+    Board.prototype.spotsToCoords = function(spots) {
+      var col, row, spot, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = spots.length; _i < _len; _i++) {
+        spot = spots[_i];
+        row = Math.floor(spot / this.spotsPerLine);
+        col = spot >= this.spotsPerLine ? spot % this.spotsPerLine : spot;
+        _results.push([this.origX + (col * 45), this.origY + (row * 45)]);
+      }
+      return _results;
+    };
+
     return Board;
 
   })();
@@ -176,6 +206,17 @@
     function PieceList(initialPieces) {
       this.pieces = initialPieces != null ? initialPieces : [];
     }
+
+    PieceList.prototype.nextColor = function(color) {
+      var index;
+      index = this.colors.indexOf(color);
+      console.log(color);
+      if (index === this.colors.length - 1) {
+        return this.colors[0];
+      } else {
+        return this.colors[index + 1];
+      }
+    };
 
     return PieceList;
 
@@ -215,22 +256,6 @@
       this.piecelist = stream;
     }
 
-    Grid.prototype.drawSel = function() {
-      var coord, coords, _i, _j, _len, _ref, _ref2, _results, _results2;
-      coords = this.spotsToCoords((function() {
-        _results = [];
-        for (var _i = _ref = this.sel.index, _ref2 = this.sel.index + this.sel.length - 1; _ref <= _ref2 ? _i <= _ref2 : _i >= _ref2; _ref <= _ref2 ? _i++ : _i--){ _results.push(_i); }
-        return _results;
-      }).apply(this));
-      _results2 = [];
-      for (_j = 0, _len = coords.length; _j < _len; _j++) {
-        coord = coords[_j];
-        this.context.fillStyle = 'rgba(246,255,0,.5)';
-        _results2.push(this.context.fillRect(coord[0], coord[1], this.size, this.size));
-      }
-      return _results2;
-    };
-
     Grid.prototype.draw = function(canvas) {
       var x, y, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
       this.context.beginPath();
@@ -245,20 +270,8 @@
       this.context.closePath();
       this.context.strokeStyle = "black";
       this.context.stroke();
-      this.drawSel();
+      if (this.activated) this.drawSel();
       return this.drawPieces(this.piecelist);
-    };
-
-    Grid.prototype.spotsToCoords = function(spots) {
-      var col, row, spot, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = spots.length; _i < _len; _i++) {
-        spot = spots[_i];
-        row = Math.floor(spot / this.spotsPerLine);
-        col = spot >= this.spotsPerLine ? spot % this.spotsPerLine : spot;
-        _results.push([col * 45, row * 45]);
-      }
-      return _results;
     };
 
     Grid.prototype.getSelection = function() {
@@ -302,12 +315,32 @@
 
     Workspace.prototype.piecelist = null;
 
-    Workspace.prototype.activated = false;
-
-    function Workspace(context, canvas) {
+    function Workspace(context, canvas, sel) {
       this.context = context;
+      this.sel = sel;
       Workspace.__super__.constructor.call(this, canvas);
     }
+
+    Workspace.prototype.activate = function() {
+      this.activated = true;
+      if (this.hasBranch()) return this.sel = new Selector(1, this.piecelist);
+    };
+
+    Workspace.prototype.cycleDown = function() {
+      var currentColor, index, newPiece;
+      index = this.piecelist.pieces.length - this.sel.index - 1;
+      currentColor = this.piecelist.pieces[index].color;
+      newPiece = new Piece(this.piecelist.nextColor(currentColor));
+      return this.piecelist.pieces.splice(index, 1, newPiece);
+    };
+
+    Workspace.prototype.update = function(key) {
+      if (this.hasBranch() && (this.sel != null) && this.activated) {
+        this.sel.update(key);
+        if (key.pressed[key.codes.DOWN]) this.cycleDown();
+        if (key.pressed[key.codes.UP]) return console.log('up');
+      }
+    };
 
     Workspace.prototype.hasBranch = function() {
       return this.piecelist != null;
@@ -321,6 +354,7 @@
       var branchCopy;
       branchCopy = this.piecelist;
       this.piecelist = null;
+      this.sel = null;
       return branchCopy;
     };
 
@@ -336,7 +370,8 @@
         this.context.closePath();
         this.context.strokeStyle = "red";
         this.context.lineWidth = 5;
-        return this.context.stroke();
+        this.context.stroke();
+        if (this.sel != null) return this.drawSel();
       }
     };
 
@@ -372,9 +407,10 @@
 
     Selector.prototype.selection = null;
 
-    function Selector(length, stream) {
+    function Selector(length, stream, parent) {
       this.length = length;
       this.stream = stream;
+      this.parent = parent;
       this.index = 0;
     }
 

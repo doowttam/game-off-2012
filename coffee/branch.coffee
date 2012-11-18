@@ -33,7 +33,10 @@ class window.BranchGame
       @wsp.activated = !@wsp.activated
 
     if @key.pressed[@key.codes.DOWN] and @gridActivated()
-      @wsp.addSelection @grid.getSelection()
+      @wsp.addBranch @grid.getSelection()
+
+    if @key.pressed[@key.codes.UP] and @gridActivated() and @wsp.hasBranch()
+      @grid.putSelection @wsp.getBranch()
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -42,7 +45,6 @@ class window.BranchGame
     @frame++
 
     @update()
-    @grid.update @key
     @sel.update @key
 
     @resetCanvas()
@@ -138,10 +140,6 @@ class Grid extends Board
     @height    = canvas.height - @size * 2
     @piecelist = stream
 
-  update: (key) ->
-    if key.pressed[key.codes.UP] and @sel.hasSelection()
-      @sel.putSelection()
-
   drawSel: () ->
     coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
 
@@ -187,6 +185,10 @@ class Grid extends Board
 
     new Branch (new Piece piece.color for piece in pieces)
 
+  putSelection: (branch) ->
+    endIndex = (@sel.index + @sel.length) * -1
+    @piecelist.pieces.splice.apply @piecelist.pieces, [endIndex, branch.pieces.length].concat(branch.pieces)
+
 class Workspace extends Board
   origX: 0
   origY: 337.5
@@ -196,8 +198,15 @@ class Workspace extends Board
   constructor: (@context, canvas) ->
     super canvas
 
-  addSelection: (branch) ->
+  hasBranch: -> @piecelist?
+
+  addBranch: (branch) ->
     @piecelist = branch
+
+  getBranch: ->
+    branchCopy = @piecelist
+    @piecelist = null
+    branchCopy
 
   draw: () ->
     if @piecelist
@@ -239,11 +248,6 @@ class Selector
 
   constructor: (@length, @stream) ->
     @index = 0
-
-  putSelection: ->
-    endIndex = (@index + @length) * -1
-    @stream.pieces.splice.apply @stream.pieces, [endIndex, @selection.pieces.length].concat(@selection.pieces.reverse())
-    @selection = null
 
   update: (key) ->
     if key.pressed[key.codes.RIGHT] and (@index + @length) < @stream.pieces.length

@@ -52,7 +52,10 @@
         this.wsp.activated = !this.wsp.activated;
       }
       if (this.key.pressed[this.key.codes.DOWN] && this.gridActivated()) {
-        return this.wsp.addSelection(this.grid.getSelection());
+        this.wsp.addBranch(this.grid.getSelection());
+      }
+      if (this.key.pressed[this.key.codes.UP] && this.gridActivated() && this.wsp.hasBranch()) {
+        return this.grid.putSelection(this.wsp.getBranch());
       }
     };
 
@@ -63,7 +66,6 @@
     BranchGame.prototype.drawFrame = function() {
       this.frame++;
       this.update();
-      this.grid.update(this.key);
       this.sel.update(this.key);
       this.resetCanvas();
       if (this.frame % 120 === 0) this.stream.addPiece();
@@ -213,12 +215,6 @@
       this.piecelist = stream;
     }
 
-    Grid.prototype.update = function(key) {
-      if (key.pressed[key.codes.UP] && this.sel.hasSelection()) {
-        return this.sel.putSelection();
-      }
-    };
-
     Grid.prototype.drawSel = function() {
       var coord, coords, _i, _j, _len, _ref, _ref2, _results, _results2;
       coords = this.spotsToCoords((function() {
@@ -286,6 +282,12 @@
       })());
     };
 
+    Grid.prototype.putSelection = function(branch) {
+      var endIndex;
+      endIndex = (this.sel.index + this.sel.length) * -1;
+      return this.piecelist.pieces.splice.apply(this.piecelist.pieces, [endIndex, branch.pieces.length].concat(branch.pieces));
+    };
+
     return Grid;
 
   })(Board);
@@ -307,8 +309,19 @@
       Workspace.__super__.constructor.call(this, canvas);
     }
 
-    Workspace.prototype.addSelection = function(branch) {
+    Workspace.prototype.hasBranch = function() {
+      return this.piecelist != null;
+    };
+
+    Workspace.prototype.addBranch = function(branch) {
       return this.piecelist = branch;
+    };
+
+    Workspace.prototype.getBranch = function() {
+      var branchCopy;
+      branchCopy = this.piecelist;
+      this.piecelist = null;
+      return branchCopy;
     };
 
     Workspace.prototype.draw = function() {
@@ -364,13 +377,6 @@
       this.stream = stream;
       this.index = 0;
     }
-
-    Selector.prototype.putSelection = function() {
-      var endIndex;
-      endIndex = (this.index + this.length) * -1;
-      this.stream.pieces.splice.apply(this.stream.pieces, [endIndex, this.selection.pieces.length].concat(this.selection.pieces.reverse()));
-      return this.selection = null;
-    };
 
     Selector.prototype.update = function(key) {
       if (key.pressed[key.codes.RIGHT] && (this.index + this.length) < this.stream.pieces.length) {

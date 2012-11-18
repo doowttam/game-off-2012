@@ -232,14 +232,11 @@
       this.pieces = initialPieces != null ? initialPieces : [];
     }
 
-    PieceList.prototype.nextColor = function(color) {
-      var index;
+    PieceList.prototype.cycleColor = function(color, direction) {
+      var index, newIndex;
       index = this.colors.indexOf(color);
-      if (index === this.colors.length - 1) {
-        return this.colors[0];
-      } else {
-        return this.colors[index + 1];
-      }
+      newIndex = (index + direction + this.colors.length) % this.colors.length;
+      return this.colors[newIndex];
     };
 
     return PieceList;
@@ -350,19 +347,19 @@
       if (this.hasBranch()) return this.sel = new Selector(1, this.piecelist);
     };
 
-    Workspace.prototype.cycleDown = function() {
+    Workspace.prototype.cycle = function(direction) {
       var currentColor, index, newPiece;
       index = this.piecelist.pieces.length - this.sel.index - 1;
       currentColor = this.piecelist.pieces[index].color;
-      newPiece = new Piece(this.piecelist.nextColor(currentColor));
+      newPiece = new Piece(this.piecelist.cycleColor(currentColor, direction));
       return this.piecelist.pieces.splice(index, 1, newPiece);
     };
 
     Workspace.prototype.update = function(key) {
       if (this.hasBranch() && (this.sel != null) && this.activated) {
         this.sel.update(key);
-        if (this.isPressed(key.codes.DOWN, "cycleDown", key)) this.cycleDown();
-        if (this.isPressed(key.codes.UP, "cycleUp", key)) return console.log('up');
+        if (this.isPressed(key.codes.DOWN, "cycleDown", key)) this.cycle(-1);
+        if (this.isPressed(key.codes.UP, "cycleUp", key)) return this.cycle(1);
       }
     };
 
@@ -383,7 +380,6 @@
     };
 
     Workspace.prototype.draw = function() {
-      if (this.piecelist) this.drawPieces(this.piecelist);
       if (this.activated) {
         this.context.beginPath();
         this.context.moveTo(0, 315);
@@ -395,8 +391,9 @@
         this.context.strokeStyle = "red";
         this.context.lineWidth = 5;
         this.context.stroke();
-        if (this.sel != null) return this.drawSel();
+        if (this.sel != null) this.drawSel();
       }
+      if (this.piecelist) return this.drawPieces(this.piecelist);
     };
 
     return Workspace;

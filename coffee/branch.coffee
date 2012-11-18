@@ -158,13 +158,11 @@ class PieceList
   constructor: (initialPieces)->
     @pieces = initialPieces ? []
 
-  nextColor: (color) ->
-    index = @colors.indexOf color
+  cycleColor: (color, direction) ->
+    index    = @colors.indexOf color
+    newIndex = (index + direction + @colors.length) % @colors.length
 
-    if index == @colors.length - 1
-      @colors[0]
-    else
-      @colors[index + 1]
+    @colors[newIndex]
 
 class Stream extends PieceList
   constructor: ->
@@ -229,10 +227,10 @@ class Workspace extends Board
     @activated = true
     @sel = new Selector 1, @piecelist if @hasBranch()
 
-  cycleDown: ->
+  cycle: (direction) ->
     index        = @piecelist.pieces.length - @sel.index - 1
     currentColor = @piecelist.pieces[index].color
-    newPiece     = new Piece @piecelist.nextColor currentColor
+    newPiece     = new Piece @piecelist.cycleColor currentColor, direction
     @piecelist.pieces.splice index, 1, newPiece
 
   update: (key) ->
@@ -240,10 +238,10 @@ class Workspace extends Board
       @sel.update key
 
       if @isPressed key.codes.DOWN, "cycleDown", key
-        @cycleDown()
+        @cycle -1
 
       if @isPressed key.codes.UP, "cycleUp", key
-        console.log 'up'
+        @cycle 1
 
   hasBranch: -> @piecelist?
 
@@ -257,8 +255,6 @@ class Workspace extends Board
     branchCopy
 
   draw: () ->
-    if @piecelist then @drawPieces @piecelist
-
     if @activated
       @context.beginPath()
 
@@ -274,6 +270,8 @@ class Workspace extends Board
       @context.stroke()
 
       @drawSel() if @sel?
+
+    if @piecelist then @drawPieces @piecelist
 
 class Piece
   radius = 15

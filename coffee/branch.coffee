@@ -31,7 +31,12 @@ class window.BranchGame extends MeteredMover
     @win.onkeydown = (e) =>
       @key.onKeyDown e
 
-    @stream = new Stream
+    @pattern = ['red', 'blue', 'green']
+
+    @points   = 0
+    @position = 0
+
+    @stream = new Stream 7
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
     @wsp    = new Workspace @context, @canvas
@@ -55,6 +60,17 @@ class window.BranchGame extends MeteredMover
     if @isPressed(@key.codes.UP, "putWSPSelection", @key) and @grid.activated and @wsp.hasBranch()
       @grid.putSelection @wsp.getBranch()
 
+  adjustScore: (removedPiece) ->
+    if removedPiece.color is @calculatePatternAtPos()
+      @points++
+    else
+      console.log "Needed #{@calculatePatternAtPos()} but had #{removedPiece.color}!"
+      @points = @points - 2;
+
+    @position++
+
+  calculatePatternAtPos: -> @pattern[@position % @pattern.length]
+
   resetCanvas: ->
     @canvas.width = @canvas.width
 
@@ -68,7 +84,8 @@ class window.BranchGame extends MeteredMover
     @resetCanvas()
 
     if @frame % 120 == 0
-      @stream.addPiece()
+      removedPiece = @stream.addNewPiece()
+      if removedPiece? then @adjustScore removedPiece
 
     @grid.draw @canvas
     @wsp.draw()
@@ -165,13 +182,22 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
-  constructor: ->
+  # maxLength: 98
+  maxLength: 15
+
+  constructor: (starterPieces) ->
     super()
-    @addPiece() for i in [1..7]
+    @addPiece() for i in [1..starterPieces]
 
   addPiece: ->
     color = Math.floor(Math.random() * @colors.length)
     @pieces.push(new Piece @colors[color])
+
+  addNewPiece: ->
+    @addPiece()
+    @checkOverFlow()
+
+  checkOverFlow: -> if @pieces.length > @maxLength then removedPiece = @pieces.shift() else null
 
 class Grid extends Board
   constructor: (@context, canvas, stream, @sel) ->

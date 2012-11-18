@@ -54,7 +54,10 @@
       this.win.onkeydown = function(e) {
         return _this.key.onKeyDown(e);
       };
-      this.stream = new Stream;
+      this.pattern = ['red', 'blue', 'green'];
+      this.points = 0;
+      this.position = 0;
+      this.stream = new Stream(7);
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
@@ -80,17 +83,35 @@
       }
     };
 
+    BranchGame.prototype.adjustScore = function(removedPiece) {
+      if (removedPiece.color === this.calculatePatternAtPos()) {
+        this.points++;
+      } else {
+        console.log("Needed " + (this.calculatePatternAtPos()) + " but had " + removedPiece.color + "!");
+        this.points = this.points - 2;
+      }
+      return this.position++;
+    };
+
+    BranchGame.prototype.calculatePatternAtPos = function() {
+      return this.pattern[this.position % this.pattern.length];
+    };
+
     BranchGame.prototype.resetCanvas = function() {
       return this.canvas.width = this.canvas.width;
     };
 
     BranchGame.prototype.drawFrame = function() {
+      var removedPiece;
       this.frame++;
       this.update();
       this.sel.update(this.key);
       this.wsp.update(this.key);
       this.resetCanvas();
-      if (this.frame % 120 === 0) this.stream.addPiece();
+      if (this.frame % 120 === 0) {
+        removedPiece = this.stream.addNewPiece();
+        if (removedPiece != null) this.adjustScore(removedPiece);
+      }
       this.grid.draw(this.canvas);
       this.wsp.draw();
       if (this.running) return requestAnimationFrame(this.drawFrame);
@@ -247,10 +268,12 @@
 
     __extends(Stream, _super);
 
-    function Stream() {
+    Stream.prototype.maxLength = 15;
+
+    function Stream(starterPieces) {
       var i;
       Stream.__super__.constructor.call(this);
-      for (i = 1; i <= 7; i++) {
+      for (i = 1; 1 <= starterPieces ? i <= starterPieces : i >= starterPieces; 1 <= starterPieces ? i++ : i--) {
         this.addPiece();
       }
     }
@@ -259,6 +282,20 @@
       var color;
       color = Math.floor(Math.random() * this.colors.length);
       return this.pieces.push(new Piece(this.colors[color]));
+    };
+
+    Stream.prototype.addNewPiece = function() {
+      this.addPiece();
+      return this.checkOverFlow();
+    };
+
+    Stream.prototype.checkOverFlow = function() {
+      var removedPiece;
+      if (this.pieces.length > this.maxLength) {
+        return removedPiece = this.pieces.shift();
+      } else {
+        return null;
+      }
     };
 
     return Stream;

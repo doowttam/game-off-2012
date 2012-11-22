@@ -36,7 +36,7 @@ class window.BranchGame extends MeteredMover
     @points   = 0
     @position = 0
 
-    @stream = new Stream 7
+    @stream = new Stream 7, @pattern
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
     @wsp    = new Workspace @context, @canvas
@@ -185,13 +185,19 @@ class Stream extends PieceList
   # maxLength: 98
   maxLength: 15
 
-  constructor: (starterPieces) ->
+  constructor: (starterPieces, @pattern) ->
     super()
+    @patternIndex = 0
     @addPiece() for i in [1..starterPieces]
 
   addPiece: ->
-    color = Math.floor(Math.random() * @colors.length)
-    @pieces.push(new Piece @colors[color])
+    color = @pattern[ @patternIndex % @pattern.length ]
+
+    # bugs
+    if Math.random() < 0.3 then color = 'black'
+
+    @patternIndex++
+    @pieces.push(new Piece color)
 
   addNewPiece: ->
     @addPiece()

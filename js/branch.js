@@ -57,7 +57,7 @@
       this.pattern = ['red', 'blue', 'green'];
       this.points = 0;
       this.position = 0;
-      this.stream = new Stream(7);
+      this.stream = new Stream(7, this.pattern);
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
@@ -270,9 +270,11 @@
 
     Stream.prototype.maxLength = 15;
 
-    function Stream(starterPieces) {
+    function Stream(starterPieces, pattern) {
       var i;
+      this.pattern = pattern;
       Stream.__super__.constructor.call(this);
+      this.patternIndex = 0;
       for (i = 1; 1 <= starterPieces ? i <= starterPieces : i >= starterPieces; 1 <= starterPieces ? i++ : i--) {
         this.addPiece();
       }
@@ -280,8 +282,10 @@
 
     Stream.prototype.addPiece = function() {
       var color;
-      color = Math.floor(Math.random() * this.colors.length);
-      return this.pieces.push(new Piece(this.colors[color]));
+      color = this.pattern[this.patternIndex % this.pattern.length];
+      if (Math.random() < 0.3) color = 'black';
+      this.patternIndex++;
+      return this.pieces.push(new Piece(color));
     };
 
     Stream.prototype.addNewPiece = function() {

@@ -84,11 +84,11 @@
     };
 
     BranchGame.prototype.adjustScore = function(removedPiece) {
-      if (removedPiece.color === this.calculatePatternAtPos()) {
-        this.points++;
-      } else {
+      if (removedPiece.bugged) {
         console.log("Needed " + (this.calculatePatternAtPos()) + " but had " + removedPiece.color + "!");
         this.points = this.points - 2;
+      } else {
+        this.points++;
       }
       return this.position++;
     };
@@ -289,11 +289,11 @@
     }
 
     Stream.prototype.addPiece = function() {
-      var color;
+      var bugged, color;
       color = this.pattern[this.patternIndex % this.pattern.length];
-      if (Math.random() < 0.3) color = 'black';
-      this.patternIndex++;
-      return this.pieces.push(new Piece(color));
+      bugged = Math.random() < 0.3;
+      this.pieces.push(new Piece(color, bugged));
+      return this.patternIndex++;
     };
 
     Stream.prototype.addNewPiece = function() {
@@ -359,16 +359,26 @@
         _results = [];
         for (_i = 0, _len = pieces.length; _i < _len; _i++) {
           piece = pieces[_i];
-          _results.push(new Piece(piece.color));
+          _results.push(new Piece(piece.color, piece.bugged));
         }
         return _results;
       })());
     };
 
     Grid.prototype.putSelection = function(branch) {
-      var endIndex;
+      var branchPiece, endIndex, i, streamPiece, _len, _ref;
       endIndex = (this.sel.index + this.sel.length) * -1;
-      return this.piecelist.pieces.splice.apply(this.piecelist.pieces, [endIndex, branch.pieces.length].concat(branch.pieces));
+      _ref = this.piecelist.pieces.slice(endIndex, (endIndex + branch.pieces.length - 1) + 1 || 9e9);
+      for (i = 0, _len = _ref.length; i < _len; i++) {
+        streamPiece = _ref[i];
+        branchPiece = branch.pieces[i];
+        if (branchPiece.bugged || branchPiece.color !== streamPiece.color) {
+          streamPiece.bugged = true;
+        } else {
+          streamPiece.bugged = false;
+        }
+      }
+      return true;
     };
 
     return Grid;
@@ -400,7 +410,7 @@
       var currentColor, index, newPiece;
       index = this.piecelist.pieces.length - this.sel.index - 1;
       currentColor = this.piecelist.pieces[index].color;
-      newPiece = new Piece(this.piecelist.cycleColor(currentColor, direction));
+      newPiece = new Piece(this.piecelist.cycleColor(currentColor, direction), false);
       return this.piecelist.pieces.splice(index, 1, newPiece);
     };
 
@@ -454,8 +464,9 @@
 
     radius = 15;
 
-    function Piece(color) {
+    function Piece(color, bugged) {
       this.color = color;
+      this.bugged = bugged;
     }
 
     Piece.prototype.draw = function(context, x, y) {
@@ -465,7 +476,7 @@
       context.strokeStyle = "black";
       context.lineWidth = 1;
       context.stroke();
-      context.fillStyle = this.color;
+      context.fillStyle = this.bugged ? 'black' : this.color;
       return context.fill();
     };
 

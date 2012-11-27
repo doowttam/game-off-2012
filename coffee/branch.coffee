@@ -61,11 +61,11 @@ class window.BranchGame extends MeteredMover
       @grid.putSelection @wsp.getBranch()
 
   adjustScore: (removedPiece) ->
-    if removedPiece.color is @calculatePatternAtPos()
-      @points++
-    else
+    if removedPiece.bugged
       console.log "Needed #{@calculatePatternAtPos()} but had #{removedPiece.color}!"
       @points = @points - 2;
+    else
+      @points++
 
     @position++
 
@@ -202,10 +202,11 @@ class Stream extends PieceList
     color = @pattern[ @patternIndex % @pattern.length ]
 
     # bugs
-    if Math.random() < 0.3 then color = 'black'
+    bugged = Math.random() < 0.3
+
+    @pieces.push new Piece color, bugged
 
     @patternIndex++
-    @pieces.push(new Piece color)
 
   addNewPiece: ->
     @addPiece()
@@ -249,11 +250,19 @@ class Grid extends Board
     else
       pieces = @piecelist.pieces.slice startIndex
 
-    new Branch(new Piece piece.color for piece in pieces)
+    new Branch(new Piece piece.color, piece.bugged for piece in pieces)
 
   putSelection: (branch) ->
     endIndex = (@sel.index + @sel.length) * -1
-    @piecelist.pieces.splice.apply @piecelist.pieces, [endIndex, branch.pieces.length].concat(branch.pieces)
+
+    for streamPiece, i in @piecelist.pieces[endIndex..(endIndex + branch.pieces.length - 1)]
+      branchPiece = branch.pieces[i]
+      if branchPiece.bugged or branchPiece.color != streamPiece.color
+        streamPiece.bugged = true
+      else
+        streamPiece.bugged = false
+
+    true # lame return statement
 
 class Workspace extends Board
   origX: 0
@@ -270,7 +279,7 @@ class Workspace extends Board
   cycle: (direction) ->
     index        = @piecelist.pieces.length - @sel.index - 1
     currentColor = @piecelist.pieces[index].color
-    newPiece     = new Piece @piecelist.cycleColor currentColor, direction
+    newPiece     = new Piece @piecelist.cycleColor(currentColor, direction), false
     @piecelist.pieces.splice index, 1, newPiece
 
   update: (key) ->
@@ -316,7 +325,7 @@ class Workspace extends Board
 class Piece
   radius = 15
 
-  constructor: (@color) ->
+  constructor: (@color, @bugged) ->
 
   draw: (context, x, y) ->
     context.beginPath()
@@ -327,7 +336,7 @@ class Piece
     context.lineWidth = 1
 
     context.stroke()
-    context.fillStyle = @color
+    context.fillStyle = if @bugged then 'black' else @color
     context.fill()
 
 class Selector extends MeteredMover

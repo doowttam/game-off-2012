@@ -101,6 +101,13 @@
       return this.canvas.width = this.canvas.width;
     };
 
+    BranchGame.prototype.drawScore = function() {
+      this.context.fillStyle = 'black';
+      this.context.font = 'bold 30px sans-serif';
+      this.context.textAlign = 'right';
+      return this.context.fillText(this.points, 650, 370);
+    };
+
     BranchGame.prototype.drawFrame = function() {
       var removedPiece;
       this.frame++;
@@ -114,6 +121,7 @@
       }
       this.grid.draw(this.canvas);
       this.wsp.draw();
+      this.drawScore();
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 
@@ -423,13 +431,13 @@
     Workspace.prototype.draw = function() {
       if (this.activated) {
         this.context.beginPath();
-        this.context.moveTo(0, 315);
-        this.context.lineTo(675, 315);
-        this.context.lineTo(745, 405);
-        this.context.lineTo(0, 405);
-        this.context.lineTo(0, 315);
+        this.context.moveTo(0, 335);
+        this.context.lineTo(315, 335);
+        this.context.lineTo(315, 385);
+        this.context.lineTo(0, 385);
+        this.context.lineTo(0, 335);
         this.context.closePath();
-        this.context.strokeStyle = "red";
+        this.context.strokeStyle = "yellow";
         this.context.lineWidth = 5;
         this.context.stroke();
         if (this.sel != null) this.drawSel();

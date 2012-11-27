@@ -74,6 +74,12 @@ class window.BranchGame extends MeteredMover
   resetCanvas: ->
     @canvas.width = @canvas.width
 
+  drawScore: ->
+    @context.fillStyle = 'black'
+    @context.font = 'bold 30px sans-serif'
+    @context.textAlign = 'right'
+    @context.fillText @points , 650, 370
+
   drawFrame: =>
     @frame++
 
@@ -89,6 +95,8 @@ class window.BranchGame extends MeteredMover
 
     @grid.draw @canvas
     @wsp.draw()
+
+    @drawScore()
 
     requestAnimationFrame @drawFrame if @running
 
@@ -290,14 +298,14 @@ class Workspace extends Board
     if @activated
       @context.beginPath()
 
-      @context.moveTo 0, 315
-      @context.lineTo 675, 315
-      @context.lineTo 745, 405
-      @context.lineTo 0, 405
-      @context.lineTo 0, 315
+      @context.moveTo 0, 335
+      @context.lineTo 315, 335
+      @context.lineTo 315, 385
+      @context.lineTo 0, 385
+      @context.lineTo 0, 335
 
       @context.closePath()
-      @context.strokeStyle = "red"
+      @context.strokeStyle = "yellow"
       @context.lineWidth = 5
       @context.stroke()
 

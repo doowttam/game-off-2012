@@ -34,7 +34,7 @@ class window.BranchGame extends MeteredMover
     @points   = 0
     @position = 0
 
-    @stream = new Stream 12
+    @stream = new Stream
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
     @wsp    = new Workspace @context, @canvas
@@ -185,17 +185,18 @@ class PieceList
 class Stream extends PieceList
   maxLength: 45
 
-  constructor: (starterPieces) ->
+  constructor: () ->
     super()
     @pattern  = @randomizePattern()
     @position = 0
-    @addPiece() for i in [1..starterPieces]
+    @addPiece true  for i in [1..@maxLength - 15]
+    @addPiece false for i in [1..15]
 
-  addPiece: ->
+  addPiece: (starter) ->
     color = @pattern[ @position % @pattern.length ]
 
     # bugs
-    bugged = Math.random() < 0.3
+    bugged = Math.random() < 0.3 and !starter
 
     @pieces.push new Piece color, bugged
 
@@ -210,26 +211,14 @@ class Stream extends PieceList
   randomizePattern: -> (@colors[Math.ceil(Math.random() * 3)] for i in [1..3])
 
 class Grid extends Board
+  origY: 90
+
   constructor: (@context, canvas, stream, @sel) ->
     super canvas
-    @height    = canvas.height - @size * 2
+    @height    = 135
     @piecelist = stream
 
   draw: (canvas) ->
-    @context.beginPath()
-
-    for x in [@size..(canvas.width - @size)] by @size
-      @context.moveTo x, 0
-      @context.lineTo x, @height
-
-    for y in [@size..@height] by @size
-      @context.moveTo 0, y
-      @context.lineTo canvas.width, y
-
-    @context.closePath()
-    @context.strokeStyle = "black"
-    @context.stroke()
-
     @drawSel() if @activated
     @drawPieces @piecelist
 

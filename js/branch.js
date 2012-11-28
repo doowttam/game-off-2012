@@ -56,7 +56,7 @@
       };
       this.points = 0;
       this.position = 0;
-      this.stream = new Stream(12);
+      this.stream = new Stream;
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
@@ -271,20 +271,23 @@
 
     Stream.prototype.maxLength = 45;
 
-    function Stream(starterPieces) {
-      var i;
+    function Stream() {
+      var i, _ref;
       Stream.__super__.constructor.call(this);
       this.pattern = this.randomizePattern();
       this.position = 0;
-      for (i = 1; 1 <= starterPieces ? i <= starterPieces : i >= starterPieces; 1 <= starterPieces ? i++ : i--) {
-        this.addPiece();
+      for (i = 1, _ref = this.maxLength - 15; 1 <= _ref ? i <= _ref : i >= _ref; 1 <= _ref ? i++ : i--) {
+        this.addPiece(true);
+      }
+      for (i = 1; i <= 15; i++) {
+        this.addPiece(false);
       }
     }
 
-    Stream.prototype.addPiece = function() {
+    Stream.prototype.addPiece = function(starter) {
       var bugged, color;
       color = this.pattern[this.position % this.pattern.length];
-      bugged = Math.random() < 0.3;
+      bugged = Math.random() < 0.3 && !starter;
       this.pieces.push(new Piece(color, bugged));
       return this.position++;
     };
@@ -319,28 +322,17 @@
 
     __extends(Grid, _super);
 
+    Grid.prototype.origY = 90;
+
     function Grid(context, canvas, stream, sel) {
       this.context = context;
       this.sel = sel;
       Grid.__super__.constructor.call(this, canvas);
-      this.height = canvas.height - this.size * 2;
+      this.height = 135;
       this.piecelist = stream;
     }
 
     Grid.prototype.draw = function(canvas) {
-      var x, y, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
-      this.context.beginPath();
-      for (x = _ref = this.size, _ref2 = canvas.width - this.size, _ref3 = this.size; _ref <= _ref2 ? x <= _ref2 : x >= _ref2; x += _ref3) {
-        this.context.moveTo(x, 0);
-        this.context.lineTo(x, this.height);
-      }
-      for (y = _ref4 = this.size, _ref5 = this.height, _ref6 = this.size; _ref4 <= _ref5 ? y <= _ref5 : y >= _ref5; y += _ref6) {
-        this.context.moveTo(0, y);
-        this.context.lineTo(canvas.width, y);
-      }
-      this.context.closePath();
-      this.context.strokeStyle = "black";
-      this.context.stroke();
       if (this.activated) this.drawSel();
       return this.drawPieces(this.piecelist);
     };

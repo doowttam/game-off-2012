@@ -183,7 +183,7 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
-  maxLength: 15
+  maxLength: 45
 
   constructor: (starterPieces) ->
     super()
@@ -245,7 +245,7 @@ class Grid extends Board
     else
       pieces = @piecelist.pieces.slice startIndex
 
-    new Branch(new Piece piece.color, piece.bugged for piece in pieces)
+    new PieceList(new Piece piece.color, piece.bugged for piece in pieces)
 
   putSelection: (branch) ->
     endIndex = (@sel.index + @sel.length) * -1
@@ -347,5 +347,3 @@ class Selector extends MeteredMover
 
     if @isPressed(key.codes.LEFT, "moveSelLeft", key) and @index > 0
       @index = @index - 1
-
-class Branch extends PieceList

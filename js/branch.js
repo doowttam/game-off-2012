@@ -1,5 +1,5 @@
 (function() {
-  var Board, Branch, Grid, Key, MeteredMover, Piece, PieceList, Selector, Stream, Workspace,
+  var Board, Grid, Key, MeteredMover, Piece, PieceList, Selector, Stream, Workspace,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
@@ -269,7 +269,7 @@
 
     __extends(Stream, _super);
 
-    Stream.prototype.maxLength = 15;
+    Stream.prototype.maxLength = 45;
 
     function Stream(starterPieces) {
       var i;
@@ -355,7 +355,7 @@
       } else {
         pieces = this.piecelist.pieces.slice(startIndex);
       }
-      return new Branch((function() {
+      return new PieceList((function() {
         var _i, _len, _results;
         _results = [];
         for (_i = 0, _len = pieces.length; _i < _len; _i++) {
@@ -510,17 +510,5 @@
     return Selector;
 
   })(MeteredMover);
-
-  Branch = (function(_super) {
-
-    __extends(Branch, _super);
-
-    function Branch() {
-      Branch.__super__.constructor.apply(this, arguments);
-    }
-
-    return Branch;
-
-  })(PieceList);
 
 }).call(this);

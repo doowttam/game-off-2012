@@ -31,12 +31,10 @@ class window.BranchGame extends MeteredMover
     @win.onkeydown = (e) =>
       @key.onKeyDown e
 
-    @pattern = ['red', 'blue', 'green']
-
     @points   = 0
     @position = 0
 
-    @stream = new Stream 7, @pattern
+    @stream = new Stream 12
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
     @wsp    = new Workspace @context, @canvas
@@ -62,14 +60,9 @@ class window.BranchGame extends MeteredMover
 
   adjustScore: (removedPiece) ->
     if removedPiece.bugged
-      console.log "Needed #{@calculatePatternAtPos()} but had #{removedPiece.color}!"
       @points = @points - 2;
     else
       @points++
-
-    @position++
-
-  calculatePatternAtPos: -> @pattern[@position % @pattern.length]
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -190,29 +183,31 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
-  # maxLength: 98
   maxLength: 15
 
-  constructor: (starterPieces, @pattern) ->
+  constructor: (starterPieces) ->
     super()
-    @patternIndex = 0
+    @pattern  = @randomizePattern()
+    @position = 0
     @addPiece() for i in [1..starterPieces]
 
   addPiece: ->
-    color = @pattern[ @patternIndex % @pattern.length ]
+    color = @pattern[ @position % @pattern.length ]
 
     # bugs
     bugged = Math.random() < 0.3
 
     @pieces.push new Piece color, bugged
 
-    @patternIndex++
+    @position++
 
   addNewPiece: ->
     @addPiece()
     @checkOverFlow()
 
-  checkOverFlow: -> if @pieces.length > @maxLength then removedPiece = @pieces.shift() else null
+  checkOverFlow: -> if @pieces.length > @maxLength then @pieces.shift() else null
+
+  randomizePattern: -> (@colors[Math.ceil(Math.random() * 3)] for i in [1..3])
 
 class Grid extends Board
   constructor: (@context, canvas, stream, @sel) ->

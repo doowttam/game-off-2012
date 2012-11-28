@@ -54,10 +54,9 @@
       this.win.onkeydown = function(e) {
         return _this.key.onKeyDown(e);
       };
-      this.pattern = ['red', 'blue', 'green'];
       this.points = 0;
       this.position = 0;
-      this.stream = new Stream(7, this.pattern);
+      this.stream = new Stream(12);
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
@@ -85,16 +84,10 @@
 
     BranchGame.prototype.adjustScore = function(removedPiece) {
       if (removedPiece.bugged) {
-        console.log("Needed " + (this.calculatePatternAtPos()) + " but had " + removedPiece.color + "!");
-        this.points = this.points - 2;
+        return this.points = this.points - 2;
       } else {
-        this.points++;
+        return this.points++;
       }
-      return this.position++;
-    };
-
-    BranchGame.prototype.calculatePatternAtPos = function() {
-      return this.pattern[this.position % this.pattern.length];
     };
 
     BranchGame.prototype.resetCanvas = function() {
@@ -278,11 +271,11 @@
 
     Stream.prototype.maxLength = 15;
 
-    function Stream(starterPieces, pattern) {
+    function Stream(starterPieces) {
       var i;
-      this.pattern = pattern;
       Stream.__super__.constructor.call(this);
-      this.patternIndex = 0;
+      this.pattern = this.randomizePattern();
+      this.position = 0;
       for (i = 1; 1 <= starterPieces ? i <= starterPieces : i >= starterPieces; 1 <= starterPieces ? i++ : i--) {
         this.addPiece();
       }
@@ -290,10 +283,10 @@
 
     Stream.prototype.addPiece = function() {
       var bugged, color;
-      color = this.pattern[this.patternIndex % this.pattern.length];
+      color = this.pattern[this.position % this.pattern.length];
       bugged = Math.random() < 0.3;
       this.pieces.push(new Piece(color, bugged));
-      return this.patternIndex++;
+      return this.position++;
     };
 
     Stream.prototype.addNewPiece = function() {
@@ -302,12 +295,20 @@
     };
 
     Stream.prototype.checkOverFlow = function() {
-      var removedPiece;
       if (this.pieces.length > this.maxLength) {
-        return removedPiece = this.pieces.shift();
+        return this.pieces.shift();
       } else {
         return null;
       }
+    };
+
+    Stream.prototype.randomizePattern = function() {
+      var i, _results;
+      _results = [];
+      for (i = 1; i <= 3; i++) {
+        _results.push(this.colors[Math.ceil(Math.random() * 3)]);
+      }
+      return _results;
     };
 
     return Stream;

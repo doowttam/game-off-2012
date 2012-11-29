@@ -1,5 +1,5 @@
 class MeteredMover
-  maxFreqMS: 200
+  maxFreqMS: 125
 
   constructor: -> @lastActed = {}
 

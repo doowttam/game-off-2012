@@ -6,7 +6,7 @@
 
   MeteredMover = (function() {
 
-    MeteredMover.prototype.maxFreqMS = 200;
+    MeteredMover.prototype.maxFreqMS = 125;
 
     function MeteredMover() {
       this.lastActed = {};

@@ -6,7 +6,7 @@
 
   MeteredMover = (function() {
 
-    MeteredMover.prototype.maxFreqMS = 125;
+    MeteredMover.prototype.maxFreqMS = 150;
 
     function MeteredMover() {
       this.lastActed = {};
@@ -446,7 +446,7 @@
       this.context.lineTo(this.origX, this.origY + 45);
       this.context.lineTo(this.origX, this.origY);
       this.context.closePath();
-      this.context.strokeStyle = "black";
+      this.context.strokeStyle = this.activated ? 'black' : 'gray';
       this.context.lineWidth = 5;
       this.context.stroke();
       if (this.piecelist) return this.drawPieces(this.piecelist);

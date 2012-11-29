@@ -1,5 +1,5 @@
 class MeteredMover
-  maxFreqMS: 125
+  maxFreqMS: 150
 
   constructor: -> @lastActed = {}
 
@@ -306,7 +306,7 @@ class Workspace extends Board
     @context.lineTo @origX, @origY
 
     @context.closePath()
-    @context.strokeStyle = "black"
+    @context.strokeStyle = if @activated then 'black' else 'gray'
     @context.lineWidth = 5
     @context.stroke()
 

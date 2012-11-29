@@ -83,8 +83,9 @@
     };
 
     BranchGame.prototype.adjustScore = function(removedPiece) {
+      if (!removedPiece.committed) return;
       if (removedPiece.bugged) {
-        return this.points = this.points - 2;
+        return this.points = this.points - 1;
       } else {
         return this.points++;
       }
@@ -269,17 +270,19 @@
 
     __extends(Stream, _super);
 
+    Stream.prototype.starterBugsPossible = 30;
+
     Stream.prototype.maxLength = 48;
 
     function Stream() {
-      var i, _ref;
+      var i, _ref, _ref2;
       Stream.__super__.constructor.call(this);
       this.pattern = this.randomizePattern();
       this.position = 0;
-      for (i = 1, _ref = this.maxLength - 15; 1 <= _ref ? i <= _ref : i >= _ref; 1 <= _ref ? i++ : i--) {
+      for (i = 1, _ref = this.maxLength - this.starterBugsPossible; 1 <= _ref ? i <= _ref : i >= _ref; 1 <= _ref ? i++ : i--) {
         this.addPiece(true);
       }
-      for (i = 1; i <= 15; i++) {
+      for (i = 1, _ref2 = this.starterBugsPossible; 1 <= _ref2 ? i <= _ref2 : i >= _ref2; 1 <= _ref2 ? i++ : i--) {
         this.addPiece(false);
       }
     }
@@ -366,6 +369,7 @@
       _ref = this.piecelist.pieces.slice(endIndex, (endIndex + branch.pieces.length - 1) + 1 || 9e9);
       for (i = 0, _len = _ref.length; i < _len; i++) {
         streamPiece = _ref[i];
+        streamPiece.committed = true;
         branchPiece = branch.pieces[i];
         if (branchPiece.bugged || branchPiece.color !== streamPiece.color) {
           streamPiece.bugged = true;
@@ -459,15 +463,23 @@
 
     radius = 15;
 
+    Piece.prototype.committed = false;
+
     function Piece(color, bugged) {
       this.color = color;
       this.bugged = bugged;
     }
 
     Piece.prototype.draw = function(context, x, y) {
+      var bgColor;
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.closePath();
+      if (this.committed) {
+        bgColor = this.bugged ? 'red' : 'green';
+        context.fillStyle = bgColor;
+        context.fillRect(x - 17.5, y - 17.5, 35, 35);
+      }
       context.strokeStyle = "black";
       context.lineWidth = 1;
       context.stroke();

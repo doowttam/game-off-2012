@@ -59,8 +59,10 @@ class window.BranchGame extends MeteredMover
       @grid.putSelection @wsp.getBranch()
 
   adjustScore: (removedPiece) ->
+    return if !removedPiece.committed
+
     if removedPiece.bugged
-      @points = @points - 2;
+      @points = @points - 1;
     else
       @points++
 
@@ -183,14 +185,15 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
+  starterBugsPossible: 30
   maxLength: 48
 
   constructor: () ->
     super()
     @pattern  = @randomizePattern()
     @position = 0
-    @addPiece true  for i in [1..@maxLength - 15]
-    @addPiece false for i in [1..15]
+    @addPiece true  for i in [1..@maxLength - @starterBugsPossible]
+    @addPiece false for i in [1..@starterBugsPossible]
 
   addPiece: (starter) ->
     color = @pattern[ @position % @pattern.length ]
@@ -241,11 +244,14 @@ class Grid extends Board
     endIndex = (@sel.index + @sel.length) * -1
 
     for streamPiece, i in @piecelist.pieces[endIndex..(endIndex + branch.pieces.length - 1)]
+      streamPiece.committed = true
+
       branchPiece = branch.pieces[i]
       if branchPiece.bugged or branchPiece.color != streamPiece.color
         streamPiece.bugged = true
       else
         streamPiece.bugged = false
+
 
     true # lame return statement
 
@@ -310,12 +316,19 @@ class Workspace extends Board
 class Piece
   radius = 15
 
+  committed: false
+
   constructor: (@color, @bugged) ->
 
   draw: (context, x, y) ->
     context.beginPath()
     context.arc x, y, radius, 0, Math.PI * 2
     context.closePath()
+
+    if @committed
+      bgColor = if @bugged then 'red' else 'green'
+      context.fillStyle = bgColor
+      context.fillRect x - 17.5, y - 17.5, 35, 35 # FIXME: magic numbers
 
     context.strokeStyle = "black"
     context.lineWidth = 1

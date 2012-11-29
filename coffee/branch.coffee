@@ -133,7 +133,7 @@ class Board extends MeteredMover
 
   constructor: (canvas) ->
     super()
-    @spotsPerLine = Math.floor(canvas.width / @size)
+    @spotsPerLine = Math.floor( (canvas.width - @size * 2) / @size)
 
   getSpots: (length) ->
     spots     = []
@@ -183,7 +183,7 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
-  maxLength: 45
+  maxLength: 48
 
   constructor: () ->
     super()
@@ -212,6 +212,7 @@ class Stream extends PieceList
 
 class Grid extends Board
   origY: 90
+  origX: 45
 
   constructor: (@context, canvas, stream, @sel) ->
     super canvas

@@ -181,7 +181,7 @@
 
     function Board(canvas) {
       Board.__super__.constructor.call(this);
-      this.spotsPerLine = Math.floor(canvas.width / this.size);
+      this.spotsPerLine = Math.floor((canvas.width - this.size * 2) / this.size);
     }
 
     Board.prototype.getSpots = function(length) {
@@ -269,7 +269,7 @@
 
     __extends(Stream, _super);
 
-    Stream.prototype.maxLength = 45;
+    Stream.prototype.maxLength = 48;
 
     function Stream() {
       var i, _ref;
@@ -323,6 +323,8 @@
     __extends(Grid, _super);
 
     Grid.prototype.origY = 90;
+
+    Grid.prototype.origX = 45;
 
     function Grid(context, canvas, stream, sel) {
       this.context = context;

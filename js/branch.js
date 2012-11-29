@@ -312,7 +312,7 @@
       var i, _results;
       _results = [];
       for (i = 1; i <= 3; i++) {
-        _results.push(this.colors[Math.ceil(Math.random() * 3)]);
+        _results.push(this.colors[Math.floor(Math.random() * this.colors.length)]);
       }
       return _results;
     };

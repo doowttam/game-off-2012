@@ -211,7 +211,7 @@ class Stream extends PieceList
 
   checkOverFlow: -> if @pieces.length > @maxLength then @pieces.shift() else null
 
-  randomizePattern: -> (@colors[Math.ceil(Math.random() * 3)] for i in [1..3])
+  randomizePattern: -> (@colors[Math.floor(Math.random() * @colors.length)] for i in [1..3])
 
 class Grid extends Board
   origY: 90

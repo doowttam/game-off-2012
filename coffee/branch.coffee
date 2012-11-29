@@ -256,8 +256,8 @@ class Grid extends Board
     true # lame return statement
 
 class Workspace extends Board
-  origX: 0
-  origY: 337.5
+  origX: 180
+  origY: 325
   piecelist: null
 
   constructor: (@context, canvas, @sel) ->
@@ -295,21 +295,20 @@ class Workspace extends Board
     branchCopy
 
   draw: () ->
-    if @activated
-      @context.beginPath()
+    @drawSel() if @sel? and @activated
 
-      @context.moveTo 0, 335
-      @context.lineTo 315, 335
-      @context.lineTo 315, 385
-      @context.lineTo 0, 385
-      @context.lineTo 0, 335
+    @context.beginPath()
 
-      @context.closePath()
-      @context.strokeStyle = "yellow"
-      @context.lineWidth = 5
-      @context.stroke()
+    @context.moveTo @origX, @origY
+    @context.lineTo @origX + 315, @origY
+    @context.lineTo @origX + 315, @origY + 45
+    @context.lineTo @origX, @origY + 45
+    @context.lineTo @origX, @origY
 
-      @drawSel() if @sel?
+    @context.closePath()
+    @context.strokeStyle = "black"
+    @context.lineWidth = 5
+    @context.stroke()
 
     if @piecelist then @drawPieces @piecelist
 

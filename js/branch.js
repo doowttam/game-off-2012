@@ -388,9 +388,9 @@
 
     __extends(Workspace, _super);
 
-    Workspace.prototype.origX = 0;
+    Workspace.prototype.origX = 180;
 
-    Workspace.prototype.origY = 337.5;
+    Workspace.prototype.origY = 325;
 
     Workspace.prototype.piecelist = null;
 
@@ -438,19 +438,17 @@
     };
 
     Workspace.prototype.draw = function() {
-      if (this.activated) {
-        this.context.beginPath();
-        this.context.moveTo(0, 335);
-        this.context.lineTo(315, 335);
-        this.context.lineTo(315, 385);
-        this.context.lineTo(0, 385);
-        this.context.lineTo(0, 335);
-        this.context.closePath();
-        this.context.strokeStyle = "yellow";
-        this.context.lineWidth = 5;
-        this.context.stroke();
-        if (this.sel != null) this.drawSel();
-      }
+      if ((this.sel != null) && this.activated) this.drawSel();
+      this.context.beginPath();
+      this.context.moveTo(this.origX, this.origY);
+      this.context.lineTo(this.origX + 315, this.origY);
+      this.context.lineTo(this.origX + 315, this.origY + 45);
+      this.context.lineTo(this.origX, this.origY + 45);
+      this.context.lineTo(this.origX, this.origY);
+      this.context.closePath();
+      this.context.strokeStyle = "black";
+      this.context.lineWidth = 5;
+      this.context.stroke();
       if (this.piecelist) return this.drawPieces(this.piecelist);
     };
 

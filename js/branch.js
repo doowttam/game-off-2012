@@ -1,5 +1,5 @@
 (function() {
-  var Board, Grid, Key, MeteredMover, Piece, PieceList, Selector, Stream, Workspace,
+  var Board, EmptyPiece, Grid, Key, MeteredMover, Piece, PieceList, Selector, Stream, Workspace,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
@@ -83,12 +83,27 @@
     };
 
     BranchGame.prototype.adjustScore = function(removedPiece) {
+      if (!(removedPiece.color != null)) this.gameOver();
       if (!removedPiece.committed) return;
       if (removedPiece.bugged) {
         return this.points = this.points - 1;
       } else {
         return this.points++;
       }
+    };
+
+    BranchGame.prototype.gameOver = function() {
+      this.running = false;
+      this.context.fillStyle = 'rgba(0,0,0,.7)';
+      this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.context.fillStyle = 'white';
+      this.context.font = 'bold 48px sans-serif';
+      this.context.textAlign = 'center';
+      this.context.fillText("Day complete!", this.canvas.width / 2, 125);
+      this.context.fillStyle = 'white';
+      this.context.font = 'bold 36px sans-serif';
+      this.context.textAlign = 'center';
+      return this.context.fillText("Score: " + this.points, this.canvas.width / 2, 200);
     };
 
     BranchGame.prototype.resetCanvas = function() {
@@ -270,9 +285,11 @@
 
     __extends(Stream, _super);
 
-    Stream.prototype.starterBugsPossible = 30;
+    Stream.prototype.starterBugsPossible = 20;
 
     Stream.prototype.maxLength = 48;
+
+    Stream.prototype.totalBugs = 30;
 
     function Stream() {
       var i, _ref, _ref2;
@@ -292,11 +309,21 @@
       color = this.pattern[this.position % this.pattern.length];
       bugged = Math.random() < 0.3 && !starter;
       this.pieces.push(new Piece(color, bugged));
+      if (bugged) this.totalBugs--;
+      return this.position++;
+    };
+
+    Stream.prototype.addEmptyPiece = function() {
+      this.pieces.push(new EmptyPiece);
       return this.position++;
     };
 
     Stream.prototype.addNewPiece = function() {
-      this.addPiece();
+      if (this.totalBugs > 0) {
+        this.addPiece();
+      } else {
+        this.addEmptyPiece();
+      }
       return this.checkOverFlow();
     };
 
@@ -470,6 +497,7 @@
 
     Piece.prototype.draw = function(context, x, y) {
       var bgColor;
+      if (!(this.color != null)) return;
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.closePath();
@@ -488,6 +516,24 @@
     return Piece;
 
   })();
+
+  EmptyPiece = (function(_super) {
+
+    __extends(EmptyPiece, _super);
+
+    function EmptyPiece() {
+      EmptyPiece.__super__.constructor.apply(this, arguments);
+    }
+
+    EmptyPiece.prototype.committed = false;
+
+    EmptyPiece.prototype.bugged = false;
+
+    EmptyPiece.prototype.color = null;
+
+    return EmptyPiece;
+
+  })(Piece);
 
   Selector = (function(_super) {
 

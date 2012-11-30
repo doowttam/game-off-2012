@@ -59,12 +59,30 @@ class window.BranchGame extends MeteredMover
       @grid.putSelection @wsp.getBranch()
 
   adjustScore: (removedPiece) ->
+    if !removedPiece.color? then @gameOver()
+
     return if !removedPiece.committed
 
     if removedPiece.bugged
       @points = @points - 1;
     else
       @points++
+
+  gameOver: ->
+    @running = false
+
+    @context.fillStyle = 'rgba(0,0,0,.7)'
+    @context.fillRect 0, 0, @canvas.width, @canvas.height
+
+    @context.fillStyle = 'white'
+    @context.font = 'bold 48px sans-serif'
+    @context.textAlign = 'center'
+    @context.fillText "Day complete!", @canvas.width / 2, 125
+
+    @context.fillStyle = 'white'
+    @context.font = 'bold 36px sans-serif'
+    @context.textAlign = 'center'
+    @context.fillText "Score: " + @points, @canvas.width / 2, 200
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -185,8 +203,9 @@ class PieceList
     @colors[newIndex]
 
 class Stream extends PieceList
-  starterBugsPossible: 30
+  starterBugsPossible: 20
   maxLength: 48
+  totalBugs: 30
 
   constructor: () ->
     super()
@@ -203,10 +222,16 @@ class Stream extends PieceList
 
     @pieces.push new Piece color, bugged
 
+    @totalBugs-- if bugged
+
+    @position++
+
+  addEmptyPiece: ->
+    @pieces.push new EmptyPiece
     @position++
 
   addNewPiece: ->
-    @addPiece()
+    if @totalBugs > 0 then @addPiece() else @addEmptyPiece()
     @checkOverFlow()
 
   checkOverFlow: -> if @pieces.length > @maxLength then @pieces.shift() else null
@@ -320,6 +345,7 @@ class Piece
   constructor: (@color, @bugged) ->
 
   draw: (context, x, y) ->
+    return if !@color?
     context.beginPath()
     context.arc x, y, radius, 0, Math.PI * 2
     context.closePath()
@@ -335,6 +361,11 @@ class Piece
     context.stroke()
     context.fillStyle = if @bugged then 'black' else @color
     context.fill()
+
+class EmptyPiece extends Piece
+    committed: false
+    bugged: false
+    color: null
 
 class Selector extends MeteredMover
   selection: null

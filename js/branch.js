@@ -93,6 +93,7 @@
     };
 
     BranchGame.prototype.gameOver = function() {
+      var message;
       this.running = false;
       this.context.fillStyle = 'rgba(0,0,0,.7)';
       this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -103,7 +104,19 @@
       this.context.fillStyle = 'white';
       this.context.font = 'bold 36px sans-serif';
       this.context.textAlign = 'center';
-      return this.context.fillText("Score: " + this.points, this.canvas.width / 2, 200);
+      this.context.fillText("Score: " + this.points, this.canvas.width / 2, 200);
+      message = 'Try harder!';
+      if (this.points >= 10) {
+        message = 'Not bad!';
+      } else if (this.points >= 20) {
+        message = 'Pretty good!';
+      } else if (this.points >= 30) {
+        message = 'Perfect score!';
+      }
+      this.context.fillStyle = 'white';
+      this.context.font = 'bold 32px sans-serif';
+      this.context.textAlign = 'center';
+      return this.context.fillText(message, this.canvas.width / 2, 300);
     };
 
     BranchGame.prototype.resetCanvas = function() {
@@ -124,13 +137,13 @@
       this.sel.update(this.key);
       this.wsp.update(this.key);
       this.resetCanvas();
+      this.grid.draw(this.canvas);
+      this.wsp.draw();
+      this.drawScore();
       if (this.frame % 120 === 0) {
         removedPiece = this.stream.addNewPiece();
         if (removedPiece != null) this.adjustScore(removedPiece);
       }
-      this.grid.draw(this.canvas);
-      this.wsp.draw();
-      this.drawScore();
       if (this.running) return requestAnimationFrame(this.drawFrame);
     };
 

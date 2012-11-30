@@ -84,6 +84,20 @@ class window.BranchGame extends MeteredMover
     @context.textAlign = 'center'
     @context.fillText "Score: " + @points, @canvas.width / 2, 200
 
+    message = 'Try harder!'
+
+    if ( @points >= 10 )
+      message = 'Not bad!'
+    else if ( @points >= 20 )
+      message = 'Pretty good!'
+    else if ( @points >= 30 )
+      message = 'Perfect score!'
+
+    @context.fillStyle = 'white'
+    @context.font = 'bold 32px sans-serif'
+    @context.textAlign = 'center'
+    @context.fillText message, @canvas.width / 2, 300
+
   resetCanvas: ->
     @canvas.width = @canvas.width
 
@@ -102,14 +116,14 @@ class window.BranchGame extends MeteredMover
 
     @resetCanvas()
 
-    if @frame % 120 == 0
-      removedPiece = @stream.addNewPiece()
-      if removedPiece? then @adjustScore removedPiece
-
     @grid.draw @canvas
     @wsp.draw()
 
     @drawScore()
+
+    if @frame % 120 == 0
+      removedPiece = @stream.addNewPiece()
+      if removedPiece? then @adjustScore removedPiece
 
     requestAnimationFrame @drawFrame if @running
 

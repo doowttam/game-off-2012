@@ -87,7 +87,7 @@
       if (!removedPiece.committed) return;
       if (removedPiece.bugged) {
         return this.points = this.points - 1;
-      } else {
+      } else if (removedPiece.origBug) {
         return this.points++;
       }
     };
@@ -308,7 +308,7 @@
       var bugged, color;
       color = this.pattern[this.position % this.pattern.length];
       bugged = Math.random() < 0.3 && !starter;
-      this.pieces.push(new Piece(color, bugged));
+      this.pieces.push(new Piece(color, bugged, bugged));
       if (bugged) this.totalBugs--;
       return this.position++;
     };
@@ -384,7 +384,7 @@
         _results = [];
         for (_i = 0, _len = pieces.length; _i < _len; _i++) {
           piece = pieces[_i];
-          _results.push(new Piece(piece.color, piece.bugged));
+          _results.push(new Piece(piece.color, piece.bugged, piece.origBug));
         }
         return _results;
       })());
@@ -401,6 +401,7 @@
         if (branchPiece.bugged || branchPiece.color !== streamPiece.color) {
           streamPiece.bugged = true;
         } else {
+          if (streamPiece.bugged) streamPiece.bugFixed = true;
           streamPiece.bugged = false;
         }
       }
@@ -490,9 +491,12 @@
 
     Piece.prototype.committed = false;
 
-    function Piece(color, bugged) {
+    Piece.prototype.bugFixed = false;
+
+    function Piece(color, bugged, origBug) {
       this.color = color;
       this.bugged = bugged;
+      this.origBug = origBug != null ? origBug : false;
     }
 
     Piece.prototype.draw = function(context, x, y) {
@@ -501,7 +505,7 @@
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.closePath();
-      if (this.committed) {
+      if ((this.committed && this.bugged) || (this.bugFixed && this.origBug)) {
         bgColor = this.bugged ? 'red' : 'green';
         context.fillStyle = bgColor;
         context.fillRect(x - 17.5, y - 17.5, 35, 35);
@@ -528,6 +532,8 @@
     EmptyPiece.prototype.committed = false;
 
     EmptyPiece.prototype.bugged = false;
+
+    EmptyPiece.prototype.origBug = false;
 
     EmptyPiece.prototype.color = null;
 

@@ -65,7 +65,7 @@ class window.BranchGame extends MeteredMover
 
     if removedPiece.bugged
       @points = @points - 1;
-    else
+    else if removedPiece.origBug
       @points++
 
   gameOver: ->
@@ -220,7 +220,7 @@ class Stream extends PieceList
     # bugs
     bugged = Math.random() < 0.3 and !starter
 
-    @pieces.push new Piece color, bugged
+    @pieces.push new Piece color, bugged, bugged
 
     @totalBugs-- if bugged
 
@@ -263,7 +263,7 @@ class Grid extends Board
     else
       pieces = @piecelist.pieces.slice startIndex
 
-    new PieceList(new Piece piece.color, piece.bugged for piece in pieces)
+    new PieceList(new Piece piece.color, piece.bugged, piece.origBug for piece in pieces)
 
   putSelection: (branch) ->
     endIndex = (@sel.index + @sel.length) * -1
@@ -275,7 +275,8 @@ class Grid extends Board
       if branchPiece.bugged or branchPiece.color != streamPiece.color
         streamPiece.bugged = true
       else
-        streamPiece.bugged = false
+        streamPiece.bugFixed = true if streamPiece.bugged
+        streamPiece.bugged   = false
 
 
     true # lame return statement
@@ -341,8 +342,9 @@ class Piece
   radius = 15
 
   committed: false
+  bugFixed: false
 
-  constructor: (@color, @bugged) ->
+  constructor: (@color, @bugged, @origBug = false) ->
 
   draw: (context, x, y) ->
     return if !@color?
@@ -350,7 +352,7 @@ class Piece
     context.arc x, y, radius, 0, Math.PI * 2
     context.closePath()
 
-    if @committed
+    if (@committed and @bugged) or (@bugFixed and @origBug)
       bgColor = if @bugged then 'red' else 'green'
       context.fillStyle = bgColor
       context.fillRect x - 17.5, y - 17.5, 35, 35 # FIXME: magic numbers
@@ -365,6 +367,7 @@ class Piece
 class EmptyPiece extends Piece
     committed: false
     bugged: false
+    origBug: false
     color: null
 
 class Selector extends MeteredMover

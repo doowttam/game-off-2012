@@ -29,6 +29,8 @@ Merge correctly to fix bugs! Merge incorrectly and you'll create all new ones!
  * Gain one point for every bug you fix (that you didn't cause!)
  * Lose one point for every bug you cause that makes it to the end
 
+(During playtesting, I did find that you could play the game well and never go into branch mode. But, branch mode is more fun, don't you think?)
+
 Controls
 -------------------
 

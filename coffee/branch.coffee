@@ -13,14 +13,18 @@ class MeteredMover
       false
 
 class window.BranchGame extends MeteredMover
+  points: 0
+  position: 0
+  frame: 0
+
   constructor: (@doc, @win) ->
     super()
 
-    @canvas  = @doc.getElementById("game_canvas")
-    @context = @canvas.getContext("2d")
+    @canvas  = @doc.getElementById 'game_canvas'
+    @context = @canvas.getContext '2d'
     @buttons =
-      start: @doc.getElementById("start")
-      pause: @doc.getElementById("pause")
+      start: @doc.getElementById 'start'
+      pause: @doc.getElementById 'pause'
 
     @buttons.start.onclick = @play
     @buttons.pause.onclick = @pause
@@ -31,9 +35,6 @@ class window.BranchGame extends MeteredMover
     @win.onkeydown = (e) =>
       @key.onKeyDown e
 
-    @points   = 0
-    @position = 0
-
     @stream = new Stream
     @sel    = new Selector 7, @stream
     @grid   = new Grid @context, @canvas, @stream, @sel
@@ -41,19 +42,17 @@ class window.BranchGame extends MeteredMover
 
     @grid.activated = true
 
-    @frame = 0
-
     @drawOpener()
 
   drawOpener: ->
-    @context.drawImage (@doc.getElementById "opener-img"), 6, 54
+    @context.drawImage (@doc.getElementById 'opener-img'), 6, 54
     @context.fillStyle = 'black'
-    @context.font = 'bold 48px sans-serif'
+    @context.font      = 'bold 48px sans-serif'
     @context.textAlign = 'center'
-    @context.fillText "QA Simulator 2012", @canvas.width / 2, 50
+    @context.fillText 'QA Simulator 2012', @canvas.width / 2, 50
 
   update: ->
-    if @isPressed @key.codes.SPACE, "activateWSP", @key
+    if @isPressed @key.codes.SPACE, 'activateWSP', @key
       if @wsp.activated
         @wsp.activated  = false
         @grid.activated = true
@@ -61,19 +60,22 @@ class window.BranchGame extends MeteredMover
         @wsp.activate()
         @grid.activated = false
 
-    if @isPressed(@key.codes.DOWN, "getGridSelection", @key) and @grid.activated
+    if @isPressed(@key.codes.DOWN, 'getGridSelection', @key) and @grid.activated
       @wsp.addBranch @grid.getSelection()
 
-    if @isPressed(@key.codes.UP, "putWSPSelection", @key) and @grid.activated and @wsp.hasBranch()
+    if @isPressed(@key.codes.UP, 'putWSPSelection', @key) and @grid.activated and @wsp.hasBranch()
       @grid.putSelection @wsp.getBranch()
 
   adjustScore: (removedPiece) ->
+    # Empty pieces have no color
     if !removedPiece.color? then @gameOver()
 
+    # No score for pieces the user didn't affect
     return if !removedPiece.committed
 
     if removedPiece.bugged
       @points = @points - 1;
+    # Only give points for bugs fixed that were original
     else if removedPiece.origBug
       @points++
 
@@ -84,73 +86,75 @@ class window.BranchGame extends MeteredMover
     @context.fillRect 0, 0, @canvas.width, @canvas.height
 
     @context.fillStyle = 'white'
-    @context.font = 'bold 48px sans-serif'
+    @context.font      = 'bold 48px sans-serif'
     @context.textAlign = 'center'
-    @context.fillText "Day complete!", @canvas.width / 2, 125
+    @context.fillText 'Day complete!', @canvas.width / 2, 125
 
     @context.fillStyle = 'white'
-    @context.font = 'bold 36px sans-serif'
+    @context.font      = 'bold 36px sans-serif'
     @context.textAlign = 'center'
-    @context.fillText "Score: " + @points, @canvas.width / 2, 200
+    @context.fillText "Score: #{@points}", @canvas.width / 2, 200
 
     message = 'Try harder!'
 
-    if ( @points >= 10 )
-      message = 'Not bad!'
+    if ( @points >= 30 )
+      message = 'Perfect score!'
     else if ( @points >= 20 )
       message = 'Pretty good!'
-    else if ( @points >= 30 )
-      message = 'Perfect score!'
+    else if ( @points >= 10 )
+      message = 'Not bad!'
 
     @context.fillStyle = 'white'
-    @context.font = 'bold 32px sans-serif'
+    @context.font      = 'bold 32px sans-serif'
     @context.textAlign = 'center'
     @context.fillText message, @canvas.width / 2, 300
 
     @context.fillStyle = 'white'
-    @context.font = 'bold 24px sans-serif'
+    @context.font      = 'bold 24px sans-serif'
     @context.textAlign = 'center'
-    @context.fillText "(Refresh to restart)", @canvas.width / 2, 350
+    @context.fillText '(Refresh to restart)', @canvas.width / 2, 350
 
   resetCanvas: ->
     @canvas.width = @canvas.width
 
   drawScore: ->
     @context.fillStyle = 'black'
-    @context.font = 'bold 30px sans-serif'
+    @context.font      = 'bold 30px sans-serif'
     @context.textAlign = 'right'
     @context.fillText @points , 650, 370
 
   drawFrame: =>
     @frame++
 
+    # Update objects that interact with the controls
     @update()
     @sel.update @key
     @wsp.update @key
 
+    # Wipe canvas so we can draw on it
     @resetCanvas()
 
+    # Draw main parts of UI
     @grid.draw @canvas
     @wsp.draw()
-
     @drawScore()
 
+    # Add a new piece to the stream
     if @frame % 120 == 0
       removedPiece = @stream.addNewPiece()
       if removedPiece? then @adjustScore removedPiece
 
+    # Continue running if we should
     requestAnimationFrame @drawFrame if @running
 
   play: =>
     return if @running
 
     @running = true
-
     requestAnimationFrame @drawFrame
 
   pause: =>
     @running = !@running
-
     requestAnimationFrame @drawFrame if @running
 
 # Inspired by http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/index.html
@@ -158,11 +162,11 @@ class Key
   pressed: {}
 
   codes:
-    "LEFT": 37
-    "UP": 38
-    "RIGHT": 39
-    "DOWN": 40
-    "SPACE": 32
+    'LEFT': 37
+    'UP': 38
+    'RIGHT': 39
+    'DOWN': 40
+    'SPACE': 32
 
   isDown: (keyCode) =>
     return @pressed[keyCode]
@@ -194,7 +198,7 @@ class Board extends MeteredMover
         x = @origX + (col * @size - (@size/2))
         y = @origY + (row * @size - (@size/2))
         spots.push [ x, y ]
-    spots
+    spots # return spots
 
   drawPieces: (piecelist) ->
     # Note: draws pieces in reverse
@@ -219,7 +223,7 @@ class Board extends MeteredMover
 
 class PieceList
   colors: ["red", "blue", "green", "yellow", "orange"]
-  pieces: []
+  pieces: null
 
   constructor: (initialPieces)->
     @pieces = initialPieces ? []
@@ -234,11 +238,11 @@ class Stream extends PieceList
   starterBugsPossible: 20
   maxLength: 48
   totalBugs: 30
+  position: 0
 
   constructor: () ->
     super()
-    @pattern  = @randomizePattern()
-    @position = 0
+    @pattern = @randomizePattern()
     @addPiece true  for i in [1..@maxLength - @starterBugsPossible]
     @addPiece false for i in [1..@starterBugsPossible]
 
@@ -269,11 +273,10 @@ class Stream extends PieceList
 class Grid extends Board
   origY: 90
   origX: 45
+  height: 135
 
-  constructor: (@context, canvas, stream, @sel) ->
+  constructor: (@context, canvas, @piecelist, @sel) ->
     super canvas
-    @height    = 135
-    @piecelist = stream
 
   draw: (canvas) ->
     @drawSel() if @activated
@@ -296,6 +299,7 @@ class Grid extends Board
   putSelection: (branch) ->
     endIndex = (@sel.index + @sel.length) * -1
 
+    # For each piece we're merging, update set its properties
     for streamPiece, i in @piecelist.pieces[endIndex..(endIndex + branch.pieces.length - 1)]
       streamPiece.committed = true
 
@@ -305,9 +309,6 @@ class Grid extends Board
       else
         streamPiece.bugFixed = true if streamPiece.bugged
         streamPiece.bugged   = false
-
-
-    true # lame return statement
 
 class Workspace extends Board
   origX: 180
@@ -361,7 +362,7 @@ class Workspace extends Board
 
     @context.closePath()
     @context.strokeStyle = if @activated then 'black' else 'gray'
-    @context.lineWidth = 5
+    @context.lineWidth   = 5
     @context.stroke()
 
     if @piecelist then @drawPieces @piecelist
@@ -383,10 +384,10 @@ class Piece
     if (@committed and @bugged) or (@bugFixed and @origBug)
       bgColor = if @bugged then 'red' else 'green'
       context.fillStyle = bgColor
-      context.fillRect x - 17.5, y - 17.5, 35, 35 # FIXME: magic numbers
+      context.fillRect x - 17.5, y - 17.5, 35, 35 # NO GOOD: magic numbers
 
-    context.strokeStyle = "black"
-    context.lineWidth = 1
+    context.strokeStyle = 'black'
+    context.lineWidth   = 1
 
     context.stroke()
     context.fillStyle = if @bugged then 'black' else @color
@@ -400,10 +401,10 @@ class EmptyPiece extends Piece
 
 class Selector extends MeteredMover
   selection: null
+  index: 0
 
   constructor: (@length, @stream) ->
     super()
-    @index = 0
 
   update: (key) ->
     if @isPressed(key.codes.RIGHT, "moveSelRight", key) and (@index + @length) < @stream.pieces.length

@@ -31,6 +31,12 @@
 
     __extends(BranchGame, _super);
 
+    BranchGame.prototype.points = 0;
+
+    BranchGame.prototype.position = 0;
+
+    BranchGame.prototype.frame = 0;
+
     function BranchGame(doc, win) {
       var _this = this;
       this.doc = doc;
@@ -39,11 +45,11 @@
       this.play = __bind(this.play, this);
       this.drawFrame = __bind(this.drawFrame, this);
       BranchGame.__super__.constructor.call(this);
-      this.canvas = this.doc.getElementById("game_canvas");
-      this.context = this.canvas.getContext("2d");
+      this.canvas = this.doc.getElementById('game_canvas');
+      this.context = this.canvas.getContext('2d');
       this.buttons = {
-        start: this.doc.getElementById("start"),
-        pause: this.doc.getElementById("pause")
+        start: this.doc.getElementById('start'),
+        pause: this.doc.getElementById('pause')
       };
       this.buttons.start.onclick = this.play;
       this.buttons.pause.onclick = this.pause;
@@ -54,27 +60,24 @@
       this.win.onkeydown = function(e) {
         return _this.key.onKeyDown(e);
       };
-      this.points = 0;
-      this.position = 0;
       this.stream = new Stream;
       this.sel = new Selector(7, this.stream);
       this.grid = new Grid(this.context, this.canvas, this.stream, this.sel);
       this.wsp = new Workspace(this.context, this.canvas);
       this.grid.activated = true;
-      this.frame = 0;
       this.drawOpener();
     }
 
     BranchGame.prototype.drawOpener = function() {
-      this.context.drawImage(this.doc.getElementById("opener-img"), 6, 54);
+      this.context.drawImage(this.doc.getElementById('opener-img'), 6, 54);
       this.context.fillStyle = 'black';
       this.context.font = 'bold 48px sans-serif';
       this.context.textAlign = 'center';
-      return this.context.fillText("QA Simulator 2012", this.canvas.width / 2, 50);
+      return this.context.fillText('QA Simulator 2012', this.canvas.width / 2, 50);
     };
 
     BranchGame.prototype.update = function() {
-      if (this.isPressed(this.key.codes.SPACE, "activateWSP", this.key)) {
+      if (this.isPressed(this.key.codes.SPACE, 'activateWSP', this.key)) {
         if (this.wsp.activated) {
           this.wsp.activated = false;
           this.grid.activated = true;
@@ -83,10 +86,10 @@
           this.grid.activated = false;
         }
       }
-      if (this.isPressed(this.key.codes.DOWN, "getGridSelection", this.key) && this.grid.activated) {
+      if (this.isPressed(this.key.codes.DOWN, 'getGridSelection', this.key) && this.grid.activated) {
         this.wsp.addBranch(this.grid.getSelection());
       }
-      if (this.isPressed(this.key.codes.UP, "putWSPSelection", this.key) && this.grid.activated && this.wsp.hasBranch()) {
+      if (this.isPressed(this.key.codes.UP, 'putWSPSelection', this.key) && this.grid.activated && this.wsp.hasBranch()) {
         return this.grid.putSelection(this.wsp.getBranch());
       }
     };
@@ -109,18 +112,18 @@
       this.context.fillStyle = 'white';
       this.context.font = 'bold 48px sans-serif';
       this.context.textAlign = 'center';
-      this.context.fillText("Day complete!", this.canvas.width / 2, 125);
+      this.context.fillText('Day complete!', this.canvas.width / 2, 125);
       this.context.fillStyle = 'white';
       this.context.font = 'bold 36px sans-serif';
       this.context.textAlign = 'center';
       this.context.fillText("Score: " + this.points, this.canvas.width / 2, 200);
       message = 'Try harder!';
-      if (this.points >= 10) {
-        message = 'Not bad!';
+      if (this.points >= 30) {
+        message = 'Perfect score!';
       } else if (this.points >= 20) {
         message = 'Pretty good!';
-      } else if (this.points >= 30) {
-        message = 'Perfect score!';
+      } else if (this.points >= 10) {
+        message = 'Not bad!';
       }
       this.context.fillStyle = 'white';
       this.context.font = 'bold 32px sans-serif';
@@ -129,7 +132,7 @@
       this.context.fillStyle = 'white';
       this.context.font = 'bold 24px sans-serif';
       this.context.textAlign = 'center';
-      return this.context.fillText("(Refresh to restart)", this.canvas.width / 2, 350);
+      return this.context.fillText('(Refresh to restart)', this.canvas.width / 2, 350);
     };
 
     BranchGame.prototype.resetCanvas = function() {
@@ -186,11 +189,11 @@
     Key.prototype.pressed = {};
 
     Key.prototype.codes = {
-      "LEFT": 37,
-      "UP": 38,
-      "RIGHT": 39,
-      "DOWN": 40,
-      "SPACE": 32
+      'LEFT': 37,
+      'UP': 38,
+      'RIGHT': 39,
+      'DOWN': 40,
+      'SPACE': 32
     };
 
     Key.prototype.isDown = function(keyCode) {
@@ -290,7 +293,7 @@
 
     PieceList.prototype.colors = ["red", "blue", "green", "yellow", "orange"];
 
-    PieceList.prototype.pieces = [];
+    PieceList.prototype.pieces = null;
 
     function PieceList(initialPieces) {
       this.pieces = initialPieces != null ? initialPieces : [];
@@ -317,11 +320,12 @@
 
     Stream.prototype.totalBugs = 30;
 
+    Stream.prototype.position = 0;
+
     function Stream() {
       var i, _ref, _ref2;
       Stream.__super__.constructor.call(this);
       this.pattern = this.randomizePattern();
-      this.position = 0;
       for (i = 1, _ref = this.maxLength - this.starterBugsPossible; 1 <= _ref ? i <= _ref : i >= _ref; 1 <= _ref ? i++ : i--) {
         this.addPiece(true);
       }
@@ -382,12 +386,13 @@
 
     Grid.prototype.origX = 45;
 
-    function Grid(context, canvas, stream, sel) {
+    Grid.prototype.height = 135;
+
+    function Grid(context, canvas, piecelist, sel) {
       this.context = context;
+      this.piecelist = piecelist;
       this.sel = sel;
       Grid.__super__.constructor.call(this, canvas);
-      this.height = 135;
-      this.piecelist = stream;
     }
 
     Grid.prototype.draw = function(canvas) {
@@ -417,21 +422,22 @@
     };
 
     Grid.prototype.putSelection = function(branch) {
-      var branchPiece, endIndex, i, streamPiece, _len, _ref;
+      var branchPiece, endIndex, i, streamPiece, _len, _ref, _results;
       endIndex = (this.sel.index + this.sel.length) * -1;
       _ref = this.piecelist.pieces.slice(endIndex, (endIndex + branch.pieces.length - 1) + 1 || 9e9);
+      _results = [];
       for (i = 0, _len = _ref.length; i < _len; i++) {
         streamPiece = _ref[i];
         streamPiece.committed = true;
         branchPiece = branch.pieces[i];
         if (branchPiece.bugged || branchPiece.color !== streamPiece.color) {
-          streamPiece.bugged = true;
+          _results.push(streamPiece.bugged = true);
         } else {
           if (streamPiece.bugged) streamPiece.bugFixed = true;
-          streamPiece.bugged = false;
+          _results.push(streamPiece.bugged = false);
         }
       }
-      return true;
+      return _results;
     };
 
     return Grid;
@@ -536,7 +542,7 @@
         context.fillStyle = bgColor;
         context.fillRect(x - 17.5, y - 17.5, 35, 35);
       }
-      context.strokeStyle = "black";
+      context.strokeStyle = 'black';
       context.lineWidth = 1;
       context.stroke();
       context.fillStyle = this.bugged ? 'black' : this.color;
@@ -573,11 +579,12 @@
 
     Selector.prototype.selection = null;
 
+    Selector.prototype.index = 0;
+
     function Selector(length, stream) {
       this.length = length;
       this.stream = stream;
       Selector.__super__.constructor.call(this);
-      this.index = 0;
     }
 
     Selector.prototype.update = function(key) {

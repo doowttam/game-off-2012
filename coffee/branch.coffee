@@ -43,6 +43,15 @@ class window.BranchGame extends MeteredMover
 
     @frame = 0
 
+    @drawOpener()
+
+  drawOpener: ->
+    @context.drawImage (@doc.getElementById "opener-img"), 6, 54
+    @context.fillStyle = 'black'
+    @context.font = 'bold 48px sans-serif'
+    @context.textAlign = 'center'
+    @context.fillText "QA Simulator 2012", @canvas.width / 2, 50
+
   update: ->
     if @isPressed @key.codes.SPACE, "activateWSP", @key
       if @wsp.activated
@@ -97,6 +106,11 @@ class window.BranchGame extends MeteredMover
     @context.font = 'bold 32px sans-serif'
     @context.textAlign = 'center'
     @context.fillText message, @canvas.width / 2, 300
+
+    @context.fillStyle = 'white'
+    @context.font = 'bold 24px sans-serif'
+    @context.textAlign = 'center'
+    @context.fillText "(Refresh to restart)", @canvas.width / 2, 350
 
   resetCanvas: ->
     @canvas.width = @canvas.width
@@ -194,7 +208,7 @@ class Board extends MeteredMover
     coords = @spotsToCoords [@sel.index..@sel.index + @sel.length - 1]
 
     for coord in coords
-      @context.fillStyle = 'rgba(246,255,0,.5)'
+      @context.fillStyle = '#96cc00'
       @context.fillRect coord[0], coord[1], @size, @size
 
   spotsToCoords: (spots) ->

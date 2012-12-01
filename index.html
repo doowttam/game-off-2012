@@ -19,17 +19,24 @@
         <!--[if lt IE 7]>
             <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
         <![endif]-->
+
+        <img id="opener-img" src="opener-anno.png" style="display:none"/>
         
         <div class="main-container">
           <div class="game-container">
             <canvas id="game_canvas" height="405" width="675">Looks like your browser doesn't support Canavs. Sorry. :(</canvas>
-            <button type="button" id="start">Start</button>
-            <button type="button" id="pause">Pause</button>
+            <div class='controls'>
+              <button type="button" id="start">Start</button>
+              <button type="button" id="pause">Pause</button>
+            </div>
           </div>
         </div>
         
         <p class="footer">
-          Branch Game by doowttam
+          Branch Mode: <strong>Up/Down</strong> - Rotate through new commits<br />
+          Stream Mode: <strong>Up</strong> - Put branch, <strong>Down</strong> - Branch selection<br />
+
+          <strong>Space</strong> - Switch modes, <strong>Left/Right</strong> - Move selector<br />
         </p>
         
         <script src="js/plugins.js"></script>

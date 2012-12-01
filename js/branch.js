@@ -62,7 +62,16 @@
       this.wsp = new Workspace(this.context, this.canvas);
       this.grid.activated = true;
       this.frame = 0;
+      this.drawOpener();
     }
+
+    BranchGame.prototype.drawOpener = function() {
+      this.context.drawImage(this.doc.getElementById("opener-img"), 6, 54);
+      this.context.fillStyle = 'black';
+      this.context.font = 'bold 48px sans-serif';
+      this.context.textAlign = 'center';
+      return this.context.fillText("QA Simulator 2012", this.canvas.width / 2, 50);
+    };
 
     BranchGame.prototype.update = function() {
       if (this.isPressed(this.key.codes.SPACE, "activateWSP", this.key)) {
@@ -116,7 +125,11 @@
       this.context.fillStyle = 'white';
       this.context.font = 'bold 32px sans-serif';
       this.context.textAlign = 'center';
-      return this.context.fillText(message, this.canvas.width / 2, 300);
+      this.context.fillText(message, this.canvas.width / 2, 300);
+      this.context.fillStyle = 'white';
+      this.context.font = 'bold 24px sans-serif';
+      this.context.textAlign = 'center';
+      return this.context.fillText("(Refresh to restart)", this.canvas.width / 2, 350);
     };
 
     BranchGame.prototype.resetCanvas = function() {
@@ -251,7 +264,7 @@
       _results2 = [];
       for (_j = 0, _len = coords.length; _j < _len; _j++) {
         coord = coords[_j];
-        this.context.fillStyle = 'rgba(246,255,0,.5)';
+        this.context.fillStyle = '#96cc00';
         _results2.push(this.context.fillRect(coord[0], coord[1], this.size, this.size));
       }
       return _results2;

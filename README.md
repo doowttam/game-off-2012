@@ -8,16 +8,16 @@ A not so loose interpretation of the theme. Branch and merge to fix bugs!
 How to Play
 ------------------
 
-The stream moves from the top left and wraps onto each line. Black circles represent bugs you needed to fix. The stream is made up of a random pattern, by looking at the pattern you can infer what the black circle should be.
+The stream moves from the top left and wraps onto each line. Black circles represent bugs you need to fix. The stream is made up of a random pattern; by looking at the pattern, you can infer what the black circle should be.
 
 **To fix a bug:**
 
  * Select the section with the bug
- * Branch what you have selected
- * Press space to jump into "branch mode"
+ * Branch what you selected
+ * Switch into branch mode
  * Select the bug in your branch
- * Press up or down to cycle through possible fixes
- * Jump back into "stream mode" (with space)
+ * Cycle through possible fixes
+ * Switch back into stream mode
  * Merge your branch, placing it on top of whatever is selected
 
 Merge correctly to fix bugs! Merge incorrectly and you'll create all new ones!
@@ -28,6 +28,8 @@ Merge correctly to fix bugs! Merge incorrectly and you'll create all new ones!
 
  * Gain one point for every bug you fix (that you didn't cause!)
  * Lose one point for every bug you cause that makes it to the end
+
+(During playtesting, I did find that you could play the game well and never go into branch mode. But, branch mode is more fun, don't you think?)
 
 Controls
 -------------------

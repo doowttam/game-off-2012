@@ -1,7 +1,7 @@
 QA Simulator 2012
 ==================
 
-A not so loose interpretation of the theme.
+A not so loose interpretation of the theme. Branch and merge to fix bugs!
 
 ![Screenshot](http://doowttam.com/game-off-2012/opener-anno.png)
 

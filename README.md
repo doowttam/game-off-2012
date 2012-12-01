@@ -8,7 +8,7 @@ A not so loose interpretation of the theme.
 How to Play
 ------------------
 
-Black circles represent bugs you needed to fix. The stream is made up of a random pattern, by looking at the pattern you can infer what the black circle should be.
+The stream moves from the top left and wraps onto each line. Black circles represent bugs you needed to fix. The stream is made up of a random pattern, by looking at the pattern you can infer what the black circle should be.
 
 **To fix a bug:**
 
@@ -32,21 +32,21 @@ Merge correctly to fix bugs! Merge incorrectly and you'll create all new ones!
 Controls
 -------------------
 
-**Space:** Switches between branch mode and stream mode
 
-**Left/Right:** Moves your selector (same for both modes)
+ * **Space:** Switches between branch mode and stream mode
+ * **Left/Right:** Moves your selector
 
 In branch mode:
 
-**Up/Down:** Cycle through possible fixes
+ * **Up/Down:** Cycle through possible fixes
 
 In stream mode:
 
-**Down:** Branches what you have selected, overwriting any branch you already have
+ * **Down:** Branches what you have selected, overwriting any branch you already have
+ * **Up:** Puts your branch on top of whatever is currently selected
 
-**Up:** Puts your branch on top of whatever is currently selected
-
-Built with:
+Built with
+--------------
 
 * [CoffeeScript](https://github.com/jashkenas/coffee-script)
 * [HTML5 Boilerplate](https://github.com/h5bp/html5-boilerplate)
